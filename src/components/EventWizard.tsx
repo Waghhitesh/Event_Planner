@@ -168,12 +168,15 @@ export default function EventWizard({ onPlanGenerated, onDateChange, onLocationC
     }
   }
 
-  // ── Min date for date input (evaluated client-side to prevent prerender mismatches) ───
+  // ── Min date for date input (hydrated client-side to prevent SSR mismatches) ──
   const [minDateStr, setMinDateStr] = useState("");
   useEffect(() => {
-    const minDate = new Date();
-    minDate.setDate(minDate.getDate() + 1);
-    setMinDateStr(minDate.toISOString().split("T")[0]);
+    const timer = setTimeout(() => {
+      const minDate = new Date();
+      minDate.setDate(minDate.getDate() + 1);
+      setMinDateStr(minDate.toISOString().split("T")[0]);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   // ---------------------------------------------------------------------------
