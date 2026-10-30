@@ -44,7 +44,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -54,7 +54,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
 
   # ──────────────────────────────────────────────────────────────────────────
   # Job 2: Lint
@@ -70,14 +70,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Restore node_modules
         uses: actions/cache/restore@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
       - name: Run ESLint
@@ -97,14 +97,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Restore node_modules
         uses: actions/cache/restore@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
       - name: Run tsc
@@ -124,14 +124,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Restore node_modules
         uses: actions/cache/restore@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
       - name: Run npm audit (high severity)
@@ -153,14 +153,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Restore node_modules
         uses: actions/cache/restore@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
       - name: Run Vitest with Coverage
@@ -190,14 +190,14 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Restore node_modules
         uses: actions/cache/restore@v4
         with:
           path: node_modules
-          key: node-modules-${{ hashFiles('package-lock.json') }}
+          key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
       - name: Build Next.js application

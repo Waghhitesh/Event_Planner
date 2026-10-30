@@ -132,6 +132,15 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 
 ## Local Setup
 
+### Prerequisites
+
+- **Node.js**: `>=22.22.2` (or Node 24.x) — see `.nvmrc` (`nvm use`)
+- **npm**: `>=10.0.0`
+- **Google AI Studio API Key**: Free tier supported (no credit card required)
+
+> [!NOTE]
+> **Vercel Deployment**: When deploying on Vercel, navigate to **Project Settings → General → Node.js Version** and ensure it is set to **22.x** (or newer) to satisfy `undici`, `jsdom`, and `vitest` engine requirements.
+
 ```bash
 # 1. Clone
 git clone https://github.com/Waghhitesh/Event_Planner.git
