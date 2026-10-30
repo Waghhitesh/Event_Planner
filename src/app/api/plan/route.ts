@@ -3,12 +3,14 @@
  * @description Next.js Route Handler — POST /api/plan
  *
  * Features:
- *  - Input size limit (413) and rate limiter per IP (429)
- *  - In-memory LRU+TTL plan cache (saves Gemini free-tier quota)
+ *  - Actual body size enforcement (413) protecting against chunked oversize payloads
+ *  - In-memory rate limiter per IP with automatic expired timestamp cleanup (429)
+ *  - In-memory true-LRU + TTL plan cache (saves Gemini free-tier quota)
+ *  - Shared AbortSignal deadline across all model attempts (50s)
+ *  - Maximum 2 model attempts per request (initial + one corrective retry)
+ *  - Immediate 429 / quota error return without wasteful retries
+ *  - Deterministic normalisePlan fallback
  *  - XML-sandboxed prompt via buildUserPrompt / SYSTEM_INSTRUCTION
- *  - Gemini call with AbortSignal timeout
- *  - One automatic retry on 429/503 from upstream or validation failure
- *  - Deterministic plan normalisation as last resort
  *  - Typed error responses and Cache-Control: no-store
  */
 
@@ -27,6 +29,9 @@ import { createHash } from "crypto";
 // ---------------------------------------------------------------------------
 export const maxDuration = 60;
 
+// Shared deadline for all Gemini calls within a single request (50 seconds)
+const OVERALL_TIMEOUT_MS = 50_000;
+
 // ---------------------------------------------------------------------------
 // Typed error helper
 // ---------------------------------------------------------------------------
@@ -42,7 +47,7 @@ function jsonError(message: string, status: number, details?: unknown): NextResp
 }
 
 // ---------------------------------------------------------------------------
-// In-memory sliding-window rate limiter (per IP)
+// In-memory sliding-window rate limiter (per IP) with cleanup
 // ---------------------------------------------------------------------------
 
 interface RateLimitEntry {
@@ -53,26 +58,38 @@ const rateLimitMap = new Map<string, RateLimitEntry>();
 
 /**
  * Returns true if the IP has exceeded the allowed request count in the window.
- * Prunes expired timestamps on every call.
+ * Prunes expired entries across the map to prevent unbounded memory growth.
  */
 function isRateLimited(ip: string): boolean {
   const now = Date.now();
+
+  // Prune dead entries when map size grows
+  if (rateLimitMap.size > 200) {
+    for (const [k, v] of rateLimitMap.entries()) {
+      v.timestamps = v.timestamps.filter((t) => now - t < LIMITS.RATE_LIMIT_WINDOW_MS);
+      if (v.timestamps.length === 0) {
+        rateLimitMap.delete(k);
+      }
+    }
+  }
+
   const entry = rateLimitMap.get(ip) ?? { timestamps: [] };
-  // Remove timestamps outside the current window
   entry.timestamps = entry.timestamps.filter(
     (t) => now - t < LIMITS.RATE_LIMIT_WINDOW_MS
   );
+
   if (entry.timestamps.length >= LIMITS.RATE_LIMIT_MAX) {
     rateLimitMap.set(ip, entry);
     return true;
   }
+
   entry.timestamps.push(now);
   rateLimitMap.set(ip, entry);
   return false;
 }
 
 // ---------------------------------------------------------------------------
-// In-memory LRU+TTL plan cache (keyed by SHA-256 of normalised intake)
+// In-memory true LRU+TTL plan cache (keyed by SHA-256 of normalised intake)
 // ---------------------------------------------------------------------------
 
 interface CacheEntry {
@@ -102,48 +119,53 @@ function getFromCache(key: string): GeminiResponse | null {
     planCache.delete(key);
     return null;
   }
+  // True LRU: re-insert so it becomes the most recently used (at the end of Map iteration)
+  planCache.delete(key);
+  planCache.set(key, entry);
   return entry.plan;
 }
 
 function setInCache(key: string, plan: GeminiResponse): void {
-  // Evict oldest entry if at capacity
+  // Evict least-recently used entry (first key in Map) if at capacity
   if (planCache.size >= LIMITS.CACHE_MAX_SIZE) {
     const firstKey = planCache.keys().next().value;
-    if (firstKey) planCache.delete(firstKey);
+    if (firstKey !== undefined) planCache.delete(firstKey);
   }
   planCache.set(key, { plan, expiresAt: Date.now() + LIMITS.CACHE_TTL_MS });
 }
 
 // ---------------------------------------------------------------------------
-// Gemini call with timeout
+// Quota / Rate-limit detection
 // ---------------------------------------------------------------------------
 
-/**
- * Calls the Gemini model with a 45-second AbortSignal timeout.
- * Returns the raw response text.
- */
-async function callGemini(prompt: string): Promise<string> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 45_000);
-  try {
-    const model = getGeminiModel();
-    const result = await model.generateContent({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-    });
-    return result.response.text();
-  } finally {
-    clearTimeout(timer);
+function isQuotaOrRateLimitError(err: unknown): boolean {
+  if (!err) return false;
+  if (typeof err === "object" && "status" in err && (err as { status: unknown }).status === 429) {
+    return true;
   }
+  const msg = err instanceof Error ? err.message : String(err);
+  return /429|quota|RESOURCE_EXHAUSTED|Too Many Requests/i.test(msg);
+}
+
+// ---------------------------------------------------------------------------
+// Gemini call with AbortSignal
+// ---------------------------------------------------------------------------
+
+async function callGemini(prompt: string, signal?: AbortSignal): Promise<string> {
+  const model = getGeminiModel();
+  const result = await model.generateContent(
+    {
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    },
+    { signal }
+  );
+  return result.response.text();
 }
 
 // ---------------------------------------------------------------------------
 // Parse + validate Gemini response text
 // ---------------------------------------------------------------------------
 
-/**
- * Parses and Zod-validates a raw Gemini response string.
- * Returns the validated plan or throws with a descriptive message.
- */
 function parseAndValidateResponse(rawText: string): GeminiResponse {
   let parsed: unknown;
   try {
@@ -157,7 +179,6 @@ function parseAndValidateResponse(rawText: string): GeminiResponse {
     throw new Error(`Schema mismatch: ${JSON.stringify(validated.error.flatten())}`);
   }
 
-  // Strip control characters from all string fields in the output
   const plan = validated.data;
   return {
     ...plan,
@@ -191,22 +212,35 @@ function parseAndValidateResponse(rawText: string): GeminiResponse {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // 0. Check API key before doing anything else
+  // 0. Check API key
   if (!process.env.GEMINI_API_KEY) {
     return jsonError("AI service is not configured on this server.", 503);
   }
 
-  // 1. Body size limit
-  const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (contentLength > LIMITS.MAX_BODY_BYTES) {
+  // 1. Content-Length header quick check (if present)
+  const headerContentLength = Number(request.headers.get("content-length") ?? 0);
+  if (headerContentLength > LIMITS.MAX_BODY_BYTES) {
     return jsonError("Request body too large.", 413);
   }
 
-  // 2. Rate limiting per IP
+  // 2. Read actual body text and enforce MAX_BODY_BYTES on actual length
+  let rawText: string;
+  try {
+    rawText = await request.text();
+  } catch {
+    return jsonError("Failed to read request body.", 400);
+  }
+
+  if (Buffer.byteLength(rawText, "utf8") > LIMITS.MAX_BODY_BYTES) {
+    return jsonError("Request body too large.", 413);
+  }
+
+  // 3. Rate limiting per IP
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
     "unknown";
+
   if (isRateLimited(ip)) {
     const retryAfter = Math.ceil(LIMITS.RATE_LIMIT_WINDOW_MS / 1_000);
     return NextResponse.json(
@@ -221,22 +255,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 3. Parse request body
+  // 4. Parse JSON
   let rawBody: unknown;
   try {
-    rawBody = await request.json();
+    rawBody = JSON.parse(rawText);
   } catch {
     return jsonError("Invalid JSON in request body.", 400);
   }
 
-  // 4. Validate & type-narrow intake form data
+  // 5. Validate & type-narrow intake form data
   const parsed = ClientIntakeSchema.safeParse(rawBody);
   if (!parsed.success) {
     return jsonError("Validation failed.", 400, parsed.error.flatten());
   }
   const intake = parsed.data;
 
-  // 5. Check plan cache
+  // 6. Check plan cache
   const key = cacheKey(intake);
   const cached = getFromCache(key);
   if (cached) {
@@ -246,49 +280,104 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
-  // 6. First Gemini call
-  let plan: GeminiResponse;
+  // 7. Setup shared deadline AbortController across all model attempts
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OVERALL_TIMEOUT_MS);
+
   try {
-    const rawText = await callGemini(buildUserPrompt(intake));
-    plan = parseAndValidateResponse(rawText);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.warn("[EventPulse] First Gemini call failed:", msg);
+    let plan: GeminiResponse | null = null;
+    let initialError: string | null = null;
 
-    // Retry once with corrective prompt
+    // --- ATTEMPT 1: Initial call ---
     try {
-      const retryText = await callGemini(
-        buildCorrectivePrompt(intake, [msg])
-      );
-      plan = parseAndValidateResponse(retryText);
-    } catch (retryErr) {
-      const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-      console.error("[EventPulse] Retry also failed:", retryMsg);
-      return jsonError("AI service temporarily unavailable. Please try again.", 502);
+      const rawResponse = await callGemini(buildUserPrompt(intake), controller.signal);
+      plan = parseAndValidateResponse(rawResponse);
+    } catch (err) {
+      if (controller.signal.aborted) {
+        return jsonError("AI request timed out.", 504);
+      }
+      if (isQuotaOrRateLimitError(err)) {
+        return NextResponse.json(
+          { error: "AI service quota exceeded. Please wait a moment." },
+          {
+            status: 429,
+            headers: {
+              "Retry-After": "60",
+              "Cache-Control": "no-store",
+            },
+          }
+        );
+      }
+      initialError = err instanceof Error ? err.message : String(err);
+      console.warn("[EventPulse] First Gemini call failed:", initialError);
     }
-  }
 
-  // 7. Plan invariant validation
-  const { valid, errors } = validatePlanInvariants(plan, intake);
-  if (!valid) {
-    console.warn("[EventPulse] Plan invariants failed:", errors);
+    if (initialError !== null) {
+      // --- ATTEMPT 2: Corrective retry for upstream or parsing error ---
+      try {
+        const retryText = await callGemini(
+          buildCorrectivePrompt(intake, [initialError]),
+          controller.signal
+        );
+        plan = parseAndValidateResponse(retryText);
+      } catch (retryErr) {
+        if (controller.signal.aborted) {
+          return jsonError("AI request timed out.", 504);
+        }
+        if (isQuotaOrRateLimitError(retryErr)) {
+          return NextResponse.json(
+            { error: "AI service quota exceeded. Please wait a moment." },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": "60",
+                "Cache-Control": "no-store",
+              },
+            }
+          );
+        }
+        const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
+        console.error("[EventPulse] Retry also failed:", retryMsg);
+        return jsonError("AI service temporarily unavailable. Please try again.", 502);
+      }
 
-    // One corrective retry
-    try {
-      const retryText = await callGemini(buildCorrectivePrompt(intake, errors));
-      const retryPlan = parseAndValidateResponse(retryText);
-      const retryValidation = validatePlanInvariants(retryPlan, intake);
-      plan = retryValidation.valid ? retryPlan : normalisePlan(retryPlan, intake);
-    } catch {
-      // Normalise the original plan deterministically as last resort
-      plan = normalisePlan(plan, intake);
+      // Check invariants on attempt 2's plan: normalise deterministically if invalid (no more calls allowed!)
+      const inv = validatePlanInvariants(plan, intake);
+      if (!inv.valid) {
+        plan = normalisePlan(plan, intake);
+      }
+    } else if (plan !== null) {
+      // Attempt 1 succeeded — check invariants
+      const inv = validatePlanInvariants(plan, intake);
+      if (!inv.valid) {
+        console.warn("[EventPulse] Plan invariants failed:", inv.errors);
+        // --- ATTEMPT 2: Corrective retry for invariant violations ---
+        try {
+          const retryText = await callGemini(
+            buildCorrectivePrompt(intake, inv.errors),
+            controller.signal
+          );
+          const retryPlan = parseAndValidateResponse(retryText);
+          const retryInv = validatePlanInvariants(retryPlan, intake);
+          plan = retryInv.valid ? retryPlan : normalisePlan(retryPlan, intake);
+        } catch {
+          // If corrective retry fails, normalise original plan deterministically
+          plan = normalisePlan(plan, intake);
+        }
+      }
     }
-  }
 
-  // 8. Store in cache and return
-  setInCache(key, plan);
-  return NextResponse.json(plan, {
-    status: 200,
-    headers: { "Cache-Control": "no-store", "X-Cache": "MISS" },
-  });
+    if (!plan) {
+      return jsonError("Failed to generate plan.", 500);
+    }
+
+    // 8. Store in cache and return
+    setInCache(key, plan);
+    return NextResponse.json(plan, {
+      status: 200,
+      headers: { "Cache-Control": "no-store", "X-Cache": "MISS" },
+    });
+  } finally {
+    clearTimeout(timer);
+  }
 }

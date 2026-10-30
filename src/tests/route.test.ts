@@ -218,4 +218,67 @@ describe("POST /api/plan", () => {
     // The prompt must still contain safe user_input wrapper tags
     expect(promptText).toContain("<user_input>");
   });
+
+  it("returns 429 immediately and does not retry on upstream 429 / quota error", async () => {
+    const quotaErr = new Error("Resource exhausted: 429 quota exceeded");
+    mockGenerateContent.mockRejectedValue(quotaErr);
+    const POST = await getHandler();
+    const uniqueIntake = { ...VALID_INTAKE, location: "Quota Error Unique Location" };
+    const req = makeRequest(uniqueIntake, { ip: "10.0.0.50" });
+    const res = await POST(req as never);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBe("60");
+    expect(mockGenerateContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 504 when the AbortSignal deadline triggers", async () => {
+    mockGenerateContent.mockImplementation(async (_content, options) => {
+      const signal = options?.signal as AbortSignal | undefined;
+      if (signal) {
+        Object.defineProperty(signal, "aborted", { value: true, configurable: true });
+      }
+      const abortErr = new Error("The operation was aborted");
+      abortErr.name = "AbortError";
+      throw abortErr;
+    });
+    const POST = await getHandler();
+    const uniqueIntake = { ...VALID_INTAKE, location: "Timeout Test Unique Location" };
+    const req = makeRequest(uniqueIntake, { ip: "10.0.0.51" });
+    const res = await POST(req as never);
+    expect(res.status).toBe(504);
+  });
+
+  it("caps total Gemini calls at 2 even if retry also fails invariants", async () => {
+    const badPlan = {
+      ...MOCK_PLAN,
+      totalEstimatedCost: 999999,
+      timeline: MOCK_PLAN.timeline.slice(0, 2),
+    };
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify(badPlan) },
+    });
+    const POST = await getHandler();
+    const uniqueIntake = { ...VALID_INTAKE, location: "Max Two Calls Test Location" };
+    const req = makeRequest(uniqueIntake, { ip: "10.0.0.52" });
+    const res = await POST(req as never);
+    expect(res.status).toBe(200);
+    expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns 413 for chunked oversize body where content-length is missing or inaccurate", async () => {
+    const POST = await getHandler();
+    const hugeString = "x".repeat(12000);
+    const hugeBody = JSON.stringify({ ...VALID_INTAKE, location: hugeString });
+    const headers = new Headers({
+      "Content-Type": "application/json",
+      "x-forwarded-for": "10.0.0.53",
+    });
+    const req = new Request("http://localhost/api/plan", {
+      method: "POST",
+      headers,
+      body: hugeBody,
+    });
+    const res = await POST(req as never);
+    expect(res.status).toBe(413);
+  });
 });
