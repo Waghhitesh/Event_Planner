@@ -46,9 +46,8 @@ const INJECTION_PATTERNS: RegExp[] = [
   /###\s*human/gi,
   /###\s*assistant/gi,
 
-  // Ignore/disregard-previous-instructions phrasing
-  /ignore\s+(previous|all|prior)\s+instructions?/gi,
-  /disregard\s+(previous|all|prior)\s+instructions?/gi,
+  // Instruction-override injection pattern
+  /(?:ignore|disregard|forget)\s+(?:(?:all|any|the|everything)\s+)*(?:previous|prior|above|earlier)\s*(?:instructions?|prompts?|rules?|context)?/gi,
 
   // Common jailbreak tokens
   /\bJailbreak\b/gi,
@@ -99,6 +98,7 @@ export function sanitizeInput(input: string): string {
   // 2. NFKC normalisation: collapses ｓｙｓｔｅｍ → system, ＠ → @, etc.
   if (typeof sanitized.normalize === "function") {
     sanitized = sanitized.normalize("NFKC");
+    sanitized = sanitized.slice(0, LIMITS.MAX_FIELD_LENGTH);
   }
 
   // 3. Strip zero-width and bidi characters
