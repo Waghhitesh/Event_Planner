@@ -148,24 +148,55 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
       specialRequirements,
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55_000);
+
     try {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(intake),
+        signal: controller.signal,
       });
 
-      const json: unknown = await res.json();
+      let json: unknown = null;
+      try {
+        json = await res.json();
+      } catch {
+        json = null;
+      }
+
       if (!res.ok) {
-        const errorObj = json as { error?: string };
-        throw new Error(errorObj.error ?? "An unexpected error occurred");
+        if (res.status === 429) {
+          const retryAfter = res.headers.get("Retry-After");
+          const msg = retryAfter
+            ? `Too many requests, please wait ${retryAfter} seconds`
+            : "Too many requests, please wait a minute";
+          throw new Error(msg);
+        }
+        if (res.status === 504) {
+          throw new Error("The AI took too long, please try again");
+        }
+        if (json && typeof json === "object" && "error" in json && typeof (json as { error: unknown }).error === "string") {
+          throw new Error((json as { error: string }).error);
+        }
+        throw new Error("Failed to generate plan. Please try again later.");
+      }
+
+      if (!json) {
+        throw new Error("Failed to generate plan. Please try again later.");
       }
 
       onPlanGenerated(json as GeminiResponse, intake);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to generate plan";
-      setApiError(message);
+      if (err instanceof Error && err.name === "AbortError") {
+        setApiError("The AI took too long, please try again");
+      } else {
+        const message = err instanceof Error ? err.message : "Failed to generate plan. Please try again later.";
+        setApiError(message);
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   }
