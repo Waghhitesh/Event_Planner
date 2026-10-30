@@ -20,9 +20,9 @@ const IdeasTab = memo(function IdeasTab({ plan }: IdeasTabProps) {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId}>
-      <h3 id={headingId} className="sr-only">
+      <h2 id={headingId} className="sr-only">
         Personalised Ideas
-      </h3>
+      </h2>
       <ul className="grid gap-4 sm:grid-cols-2" aria-label="Personalised event ideas">
         {plan.personalizedIdeas.map((idea) => (
           <li

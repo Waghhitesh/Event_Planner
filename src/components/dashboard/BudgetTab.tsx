@@ -47,9 +47,9 @@ const BudgetTab = memo(function BudgetTab({ plan, currency = "INR" }: BudgetTabP
 
   return (
     <section aria-labelledby={headingId}>
-      <h3 id={headingId} className="sr-only">
+      <h2 id={headingId} className="sr-only">
         Budget Breakdown
-      </h3>
+      </h2>
 
       {/* Summary card */}
       <div className="rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950 dark:to-purple-950 border border-violet-100 dark:border-violet-800 p-5 mb-6">

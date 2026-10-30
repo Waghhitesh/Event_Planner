@@ -59,9 +59,9 @@ const VendorsTab = memo(function VendorsTab({ plan, currency = "INR" }: VendorsT
 
   return (
     <section aria-labelledby={headingId}>
-      <h3 id={headingId} className="sr-only">
+      <h2 id={headingId} className="sr-only">
         Vendor Checklist
-      </h3>
+      </h2>
       <ul className="space-y-3" aria-label="Vendor checklist">
         {plan.vendorChecklist.map((vendor) => {
           const isOpen = expanded.has(vendor.service);

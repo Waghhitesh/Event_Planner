@@ -28,7 +28,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 | UI | TailwindCSS v4, Lucide React |
 | AI | Google Gemini Flash (`@google/generative-ai`) |
 | Validation | Zod v4 |
-| Testing | Vitest v5 (188 tests, node environment) |
+| Testing | Vitest v5 (124 tests, jsdom + node, >90% coverage) |
 | CI/CD | GitHub Actions (6 jobs: secret scan, install, lint, typecheck, audit, test, build) |
 
 ---
@@ -199,13 +199,17 @@ src/
     └── security.ts           — sanitizeInput, xmlWrap, sanitizeOutput
 tests/
     ├── fixtures.ts           — Shared MOCK_PLAN and VALID_INTAKE
+    ├── dashboard.component.test.tsx — Tab navigation, state preservation, axe
+    ├── format.test.ts        — Multi-currency formatting & schema tests
+    ├── gemini.test.ts        — Lazy client factory tests
     ├── google-integrations.test.ts
     ├── plan-validation.test.ts
-    ├── planner.test.ts       — Legacy entry point (re-exports all suites)
+    ├── planner-app.component.test.tsx
     ├── prompt.test.ts
     ├── route.test.ts
     ├── schemas.test.ts
-    └── security.test.ts
+    ├── security.test.ts
+    └── wizard.component.test.tsx   — Form flow, validation focus, submit, axe
 ```
 
 ---
@@ -215,12 +219,17 @@ tests/
 | Suite | Tests | Focus |
 |---|---|---|
 | security | 22 | sanitizeInput, xmlWrap, Unicode evasion, false-positive regression |
-| schemas | 12 | Zod intake + response validation, SDK/Zod key parity |
-| google-integrations | 17 | Calendar URL, CSV export, formula injection, filename slug |
+| google-integrations | 27 | Calendar URL, CSV export, formula injection, filename slug |
+| route | 16 | Happy path, 400/413/429/502/504, cache, rate limit, timeout |
+| schemas | 14 | Zod intake + response validation, SDK/Zod key parity |
 | plan-validation | 13 | Invariant checks, normalisation, budget arithmetic |
-| prompt | 11 | System instruction, XML sandbox, corrective prompt |
-| route | 13 | Happy path, 400/413/429/502/503, cache, rate limit, injection |
-| **Total** | **188** | — |
+| prompt | 12 | System instruction, XML sandbox, corrective prompt |
+| format | 8 | Multi-currency formatting (INR, USD, EUR, GBP) |
+| dashboard.component | 6 | Keyboard navigation, state persistence, axe accessibility |
+| wizard.component | 3 | Step validation, focus management, payload submission, axe |
+| gemini | 2 | Lazy factory initialisation and model config |
+| planner-app.component | 1 | App view orchestration |
+| **Total** | **124** | **>92% line coverage across codebase** |
 
 ---
 

@@ -83,9 +83,9 @@ const TimelineTab = memo(function TimelineTab({ plan }: TimelineTabProps) {
 
   return (
     <section aria-labelledby={headingId}>
-      <h3 id={headingId} className="sr-only">
+      <h2 id={headingId} className="sr-only">
         Planning Timeline
-      </h3>
+      </h2>
       <ol className="relative space-y-0" aria-label="Event planning phases">
         {sorted.map((phase, phaseIdx) => (
           <li key={`${phase.phase}-${phase.daysBeforeEvent}`} className="relative pl-8 pb-6">

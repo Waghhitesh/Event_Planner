@@ -111,13 +111,15 @@ describe("GeminiResponseSchema", () => {
     expect(GeminiResponseSchema.safeParse(bad).success).toBe(false);
   });
 
-  it("has the same required top-level keys as the Gemini SchemaType definition", async () => {
-    // Dynamically import to check the SDK responseSchema matches Zod keys
+  it("has identical property keys and required fields as gemini.ts responseSchema", async () => {
     const { responseSchema } = await import("../lib/gemini");
     const zodKeys = Object.keys(GeminiResponseSchema.shape).sort();
-    // The SDK schema properties object should have the same keys as the Zod schema
-    const sdkSchema = responseSchema as { properties?: Record<string, unknown> };
+    const sdkSchema = responseSchema as { properties?: Record<string, unknown>; required?: string[] };
     const sdkKeys = Object.keys(sdkSchema.properties ?? {}).sort();
     expect(sdkKeys).toEqual(zodKeys);
+
+    // Required fields check
+    const sdkRequired = [...(sdkSchema.required ?? [])].sort();
+    expect(sdkRequired).toEqual(zodKeys);
   });
 });

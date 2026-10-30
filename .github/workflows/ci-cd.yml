@@ -163,8 +163,8 @@ jobs:
           key: node-modules-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
-      - name: Run Vitest
-        run: npm run test
+      - name: Run Vitest with Coverage
+        run: npm run test:coverage
 
       - name: Upload coverage report
         if: always()
