@@ -281,4 +281,44 @@ describe("POST /api/plan", () => {
     const res = await POST(req as never);
     expect(res.status).toBe(413);
   });
+
+  it("enforces rate-limit check before consuming request body", async () => {
+    const POST = await getHandler();
+    const ip = "early-ratelimit-test-ip";
+    for (let i = 0; i < 5; i++) {
+      await POST(makeRequest(VALID_INTAKE, { ip }) as never);
+    }
+
+    const brokenReq = {
+      headers: new Headers({
+        "x-forwarded-for": ip,
+      }),
+      text: vi.fn().mockRejectedValue(new Error("Body stream error")),
+    };
+
+    const res = await POST(brokenReq as never);
+    expect(res.status).toBe(429);
+    expect(brokenReq.text).not.toHaveBeenCalled();
+  });
+
+  it("does not cache plans that fail minimum invariant requirements even after normalisation", async () => {
+    const subMinimalPlan = {
+      ...MOCK_PLAN,
+      timeline: MOCK_PLAN.timeline.slice(0, 2),
+    };
+    mockGenerateContent.mockResolvedValue({
+      response: { text: () => JSON.stringify(subMinimalPlan) },
+    });
+
+    const POST = await getHandler();
+    const uniqueIntake = { ...VALID_INTAKE, location: "Never Cache Subminimal Plan" };
+
+    const res1 = await POST(makeRequest(uniqueIntake, { ip: "10.0.0.91" }) as never);
+    expect(res1.status).toBe(200);
+    expect(res1.headers.get("X-Cache")).toBe("MISS");
+
+    const res2 = await POST(makeRequest(uniqueIntake, { ip: "10.0.0.92" }) as never);
+    expect(res2.status).toBe(200);
+    expect(res2.headers.get("X-Cache")).toBe("MISS");
+  });
 });

@@ -218,25 +218,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return jsonError("AI service is not configured on this server.", 503);
   }
 
-  // 1. Content-Length header quick check (if present)
-  const headerContentLength = Number(request.headers.get("content-length") ?? 0);
-  if (headerContentLength > LIMITS.MAX_BODY_BYTES) {
-    return jsonError("Request body too large.", 413);
-  }
-
-  // 2. Read actual body text and enforce MAX_BODY_BYTES on actual length
-  let rawText: string;
-  try {
-    rawText = await request.text();
-  } catch {
-    return jsonError("Failed to read request body.", 400);
-  }
-
-  if (Buffer.byteLength(rawText, "utf8") > LIMITS.MAX_BODY_BYTES) {
-    return jsonError("Request body too large.", 413);
-  }
-
-  // 3. Rate limiting per IP
+  // 1. Rate limiting per IP (evaluated BEFORE reading request body)
   const ip =
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
     request.headers.get("x-real-ip") ??
@@ -254,6 +236,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         },
       }
     );
+  }
+
+  // 2. Content-Length header quick check (if present)
+  const headerContentLength = Number(request.headers.get("content-length") ?? 0);
+  if (headerContentLength > LIMITS.MAX_BODY_BYTES) {
+    return jsonError("Request body too large.", 413);
+  }
+
+  // 3. Read actual body text and enforce MAX_BODY_BYTES on actual length
+  let rawText: string;
+  try {
+    rawText = await request.text();
+  } catch {
+    return jsonError("Failed to read request body.", 400);
+  }
+
+  if (Buffer.byteLength(rawText, "utf8") > LIMITS.MAX_BODY_BYTES) {
+    return jsonError("Request body too large.", 413);
   }
 
   // 4. Parse JSON
@@ -372,8 +372,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return jsonError("Failed to generate plan.", 500);
     }
 
-    // 8. Store in cache and return
-    setInCache(key, plan);
+    // 8. Store in cache only if all invariants are satisfied, and return
+    if (validatePlanInvariants(plan, intake).valid) {
+      setInCache(key, plan);
+    }
     return NextResponse.json(plan, {
       status: 200,
       headers: { "Cache-Control": "no-store", "X-Cache": "MISS" },
