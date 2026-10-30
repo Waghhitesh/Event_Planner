@@ -8,18 +8,19 @@
 import { memo, useMemo, useCallback } from "react";
 import { Calendar, Download, ExternalLink, Printer } from "lucide-react";
 import { generateGoogleCalendarUrl, generateGoogleSheetsCsv, slugifyFilename } from "@/lib/google-integrations";
-import type { GeminiResponse } from "@/lib/schemas";
+import type { GeminiResponse, Currency } from "@/lib/schemas";
 
 interface GoogleActionsProps {
   plan: GeminiResponse;
   eventDate: string;
   location: string;
+  currency?: Currency;
 }
 
 /**
  * Renders the Google Calendar sync link and Google Sheets CSV export button.
  */
-const GoogleActions = memo(function GoogleActions({ plan, eventDate, location }: GoogleActionsProps) {
+const GoogleActions = memo(function GoogleActions({ plan, eventDate, location, currency = "INR" }: GoogleActionsProps) {
   const calendarUrl = useMemo(
     () =>
       generateGoogleCalendarUrl(
@@ -32,7 +33,7 @@ const GoogleActions = memo(function GoogleActions({ plan, eventDate, location }:
   );
 
   const handleExportCsv = useCallback(() => {
-    const csv = generateGoogleSheetsCsv(plan);
+    const csv = generateGoogleSheetsCsv(plan, currency);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -42,7 +43,7 @@ const GoogleActions = memo(function GoogleActions({ plan, eventDate, location }:
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-  }, [plan]);
+  }, [plan, currency]);
 
   const handlePrint = useCallback(() => {
     window.print();

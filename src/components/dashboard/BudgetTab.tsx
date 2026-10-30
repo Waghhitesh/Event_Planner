@@ -6,7 +6,8 @@
  */
 
 import { memo, useId } from "react";
-import type { GeminiResponse } from "@/lib/schemas";
+import type { GeminiResponse, Currency } from "@/lib/schemas";
+import { formatCurrency } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -29,35 +30,18 @@ const PRIORITY_BAR: Record<Priority, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// Utility
-// ---------------------------------------------------------------------------
-
-/**
- * Formats a number as Indian Rupee currency (no decimals).
- *
- * @param amount - Numeric value to format.
- * @returns Formatted string e.g. "₹5,00,000".
- */
-export function formatCurrency(amount: number): string {
-  return amount.toLocaleString("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  });
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 interface BudgetTabProps {
   plan: GeminiResponse;
+  currency?: Currency;
 }
 
 /**
  * Renders the budget breakdown section with progress bars and cost-saving tips.
  */
-const BudgetTab = memo(function BudgetTab({ plan }: BudgetTabProps) {
+const BudgetTab = memo(function BudgetTab({ plan, currency = "INR" }: BudgetTabProps) {
   const total = plan.totalEstimatedCost;
   const headingId = useId();
 
@@ -71,7 +55,7 @@ const BudgetTab = memo(function BudgetTab({ plan }: BudgetTabProps) {
       <div className="rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950 dark:to-purple-950 border border-violet-100 dark:border-violet-800 p-5 mb-6">
         <p className="text-sm font-medium text-violet-700 dark:text-violet-300">Total Estimated Cost</p>
         <p className="text-3xl font-bold text-violet-700 dark:text-violet-300 mt-1">
-          {formatCurrency(total)}
+          {formatCurrency(total, currency)}
         </p>
         <p className="text-xs text-violet-600 dark:text-violet-400 mt-1">{plan.themeSummary}</p>
       </div>
@@ -99,7 +83,7 @@ const BudgetTab = memo(function BudgetTab({ plan }: BudgetTabProps) {
                   </span>
                 </div>
                 <span className="text-sm font-bold text-gray-800 dark:text-gray-200 whitespace-nowrap">
-                  {formatCurrency(item.allocatedAmount)}
+                  {formatCurrency(item.allocatedAmount, currency)}
                 </span>
               </div>
 

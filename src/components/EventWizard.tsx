@@ -25,6 +25,7 @@ import {
   ClientIntakeSchema,
   type ClientIntake,
   type EventType,
+  type Currency,
   type GeminiResponse,
 } from "@/lib/schemas";
 import { tomorrowDateString } from "@/lib/date";
@@ -253,6 +254,8 @@ interface StepProps {
   setEventDate: (v: string) => void;
   location: string;
   setLocation: (v: string) => void;
+  currency: Currency;
+  setCurrency: (v: Currency) => void;
   totalBudget: string;
   setTotalBudget: (v: string) => void;
   guestCount: string;
@@ -403,6 +406,8 @@ function Step1Details({
 function Step2Budget({
   formId,
   errors,
+  currency,
+  setCurrency,
   totalBudget,
   setTotalBudget,
   guestCount,
@@ -411,37 +416,66 @@ function Step2Budget({
 }: StepProps) {
   return (
     <div className="space-y-5">
-      <FormField
-        label={
-          <label
-            htmlFor={`${formId}-budget`}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="sm:col-span-1">
+          <FormField
+            label={
+              <label
+                htmlFor={`${formId}-currency`}
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                Currency
+              </label>
+            }
           >
-            <Wallet className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
-            Total Budget (₹ / $) <span aria-hidden="true" className="text-red-500">*</span>
-          </label>
-        }
-      >
-        <TextInput
-          id={`${formId}-budget`}
-          type="number"
-          value={totalBudget}
-          onChange={(e) => {
-            setTotalBudget(e.target.value);
-            clearError("totalBudget");
-          }}
-          placeholder="e.g. 500000"
-          min={1}
-          max={LIMITS.MAX_BUDGET}
-          error={errors.totalBudget}
-          errorId={`${formId}-budget-error`}
-          hintId={`${formId}-budget-hint`}
-        />
-        <p id={`${formId}-budget-hint`} className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-          Enter your total event budget. AI will break it down across categories.
-        </p>
-        <FieldError id={`${formId}-budget-error`} message={errors.totalBudget} />
-      </FormField>
+            <select
+              id={`${formId}-currency`}
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
+          </FormField>
+        </div>
+
+        <div className="sm:col-span-2">
+          <FormField
+            label={
+              <label
+                htmlFor={`${formId}-budget`}
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+              >
+                <Wallet className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
+                Total Budget ({currency}) <span aria-hidden="true" className="text-red-500">*</span>
+              </label>
+            }
+          >
+            <TextInput
+              id={`${formId}-budget`}
+              type="number"
+              value={totalBudget}
+              onChange={(e) => {
+                setTotalBudget(e.target.value);
+                clearError("totalBudget");
+              }}
+              placeholder="e.g. 500000"
+              min={1}
+              max={LIMITS.MAX_BUDGET}
+              error={errors.totalBudget}
+              errorId={`${formId}-budget-error`}
+              hintId={`${formId}-budget-hint`}
+            />
+            <p id={`${formId}-budget-hint`} className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Enter your total event budget. AI will break it down across categories.
+            </p>
+            <FieldError id={`${formId}-budget-error`} message={errors.totalBudget} />
+          </FormField>
+        </div>
+      </div>
 
       <FormField
         label={
@@ -548,7 +582,7 @@ function Step3Preferences({
 const STEP_SCHEMAS = [
   ClientIntakeSchema.pick({ eventType: true }),
   ClientIntakeSchema.pick({ eventDate: true, location: true }),
-  ClientIntakeSchema.pick({ totalBudget: true, guestCount: true }),
+  ClientIntakeSchema.pick({ totalBudget: true, guestCount: true, currency: true }),
   ClientIntakeSchema.pick({ themePreferences: true }),
 ];
 
@@ -570,6 +604,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
   const [eventType, setEventType] = useState<EventType | "">("");
   const [eventDate, setEventDate] = useState("");
   const [location, setLocation] = useState("");
+  const [currency, setCurrency] = useState<Currency>("INR");
   const [totalBudget, setTotalBudget] = useState("");
   const [guestCount, setGuestCount] = useState("");
   const [themePreferences, setThemePreferences] = useState("");
@@ -619,6 +654,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     if (step === 2) {
       stepData.totalBudget = totalBudget ? parseFloat(totalBudget) : undefined;
       stepData.guestCount = guestCount ? parseInt(guestCount, 10) : undefined;
+      stepData.currency = currency;
     }
     if (step === 3) stepData.themePreferences = themePreferences;
 
@@ -683,6 +719,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
       eventType: eventType as EventType,
       eventDate,
       location,
+      currency,
       totalBudget: parseFloat(totalBudget),
       guestCount: parseInt(guestCount, 10),
       themePreferences,
@@ -723,6 +760,8 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     setEventDate,
     location,
     setLocation,
+    currency,
+    setCurrency,
     totalBudget,
     setTotalBudget,
     guestCount,

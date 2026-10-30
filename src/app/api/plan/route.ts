@@ -104,6 +104,7 @@ function cacheKey(intake: ClientIntake): string {
     eventType: intake.eventType,
     eventDate: intake.eventDate,
     location: intake.location.trim().toLowerCase(),
+    currency: intake.currency ?? "INR",
     totalBudget: intake.totalBudget,
     guestCount: intake.guestCount,
     themePreferences: intake.themePreferences.trim().toLowerCase(),

@@ -24,6 +24,9 @@ export const EventTypeSchema = z.enum(["wedding", "birthday", "community"], {
 });
 export type EventType = z.infer<typeof EventTypeSchema>;
 
+export const CurrencySchema = z.enum(["INR", "USD", "EUR", "GBP"]).default("INR");
+export type Currency = z.infer<typeof CurrencySchema>;
+
 export const ClientIntakeSchema = z.object({
   eventType: EventTypeSchema,
   eventDate: z
@@ -32,6 +35,7 @@ export const ClientIntakeSchema = z.object({
     .regex(DATE_PATTERN, "Date must be in YYYY-MM-DD format")
     .refine(isFutureDate, { message: "Event date must be in the future" }),
   location: nonEmptyString(LIMITS.LOCATION_MAX),
+  currency: CurrencySchema,
   totalBudget: z
     .number({ message: "Total budget is required" })
     .positive("Budget must be positive")

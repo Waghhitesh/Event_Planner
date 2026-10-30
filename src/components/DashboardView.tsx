@@ -16,7 +16,7 @@
 
 import { useState, useRef, type RefObject } from "react";
 import { RefreshCw } from "lucide-react";
-import type { GeminiResponse } from "@/lib/schemas";
+import type { GeminiResponse, Currency } from "@/lib/schemas";
 import { formatDateDisplay } from "@/lib/date";
 import BudgetTab from "@/components/dashboard/BudgetTab";
 import TimelineTab from "@/components/dashboard/TimelineTab";
@@ -32,6 +32,7 @@ interface DashboardViewProps {
   plan: GeminiResponse;
   eventDate: string;
   location: string;
+  currency?: Currency;
   onReset: () => void;
   headingRef?: RefObject<HTMLHeadingElement | null>;
 }
@@ -66,6 +67,7 @@ export default function DashboardView({
   plan,
   eventDate,
   location,
+  currency = "INR",
   onReset,
   headingRef,
 }: DashboardViewProps) {
@@ -124,7 +126,7 @@ export default function DashboardView({
 
       {/* Google integration bar */}
       <div data-print-hidden>
-        <GoogleActions plan={plan} eventDate={eventDate} location={location} />
+        <GoogleActions plan={plan} eventDate={eventDate} location={location} currency={currency} />
       </div>
 
       {/* Tabbed dashboard */}
@@ -175,9 +177,9 @@ export default function DashboardView({
               aria-labelledby={`tab-${tab.id}`}
               hidden={activeTab !== tab.id}
             >
-              {tab.id === "budget" && <BudgetTab plan={plan} />}
+              {tab.id === "budget" && <BudgetTab plan={plan} currency={currency} />}
               {tab.id === "timeline" && <TimelineTab plan={plan} />}
-              {tab.id === "vendors" && <VendorsTab plan={plan} />}
+              {tab.id === "vendors" && <VendorsTab plan={plan} currency={currency} />}
               {tab.id === "ideas" && <IdeasTab plan={plan} />}
             </div>
           ))}

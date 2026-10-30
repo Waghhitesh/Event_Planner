@@ -53,6 +53,7 @@ export default function PlannerApp() {
         plan={planState.plan}
         eventDate={planState.intake.eventDate}
         location={planState.intake.location}
+        currency={planState.intake.currency}
         onReset={handleReset}
         headingRef={dashHeadingRef}
       />

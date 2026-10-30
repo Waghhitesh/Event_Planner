@@ -7,7 +7,8 @@
  *  • slugifyFilename             – Safe filename generation for downloads
  */
 
-import type { GeminiResponse } from "./schemas";
+import type { GeminiResponse, Currency } from "./schemas";
+import { formatCurrency } from "./format";
 
 // ---------------------------------------------------------------------------
 // Google Calendar
@@ -105,25 +106,25 @@ function csvRow(cells: (string | number)[]): string {
  * @param planData - Validated Gemini response object.
  * @returns A string of RFC 4180 CSV content (CRLF line endings, UTF-8).
  */
-export function generateGoogleSheetsCsv(planData: GeminiResponse): string {
+export function generateGoogleSheetsCsv(planData: GeminiResponse, currency: Currency = "INR"): string {
   const lines: string[] = [];
 
   lines.push(csvRow(["EventPulse AI — Event Plan Export"]));
   lines.push(csvRow(["Event Name", planData.eventName]));
   lines.push(csvRow(["Theme Summary", planData.themeSummary]));
-  lines.push(csvRow(["Total Estimated Cost", planData.totalEstimatedCost]));
+  lines.push(csvRow(["Total Estimated Cost", formatCurrency(planData.totalEstimatedCost, currency)]));
   lines.push("");
 
   // ── Budget Breakdown ────────────────────────────────────────────────────
   lines.push(csvRow(["BUDGET BREAKDOWN"]));
-  lines.push(csvRow(["Category", "Allocated Amount", "Priority", "Cost Saving Tip"]));
+  lines.push(csvRow(["Category", `Allocated Amount (${currency})`, "Priority", "Cost Saving Tip"]));
 
   let budgetTotal = 0;
   for (const item of planData.budgetBreakdown) {
-    lines.push(csvRow([item.category, item.allocatedAmount, item.priority, item.costSavingTip]));
+    lines.push(csvRow([item.category, formatCurrency(item.allocatedAmount, currency), item.priority, item.costSavingTip]));
     budgetTotal += item.allocatedAmount;
   }
-  lines.push(csvRow(["TOTAL", budgetTotal, "", ""]));
+  lines.push(csvRow(["TOTAL", formatCurrency(budgetTotal, currency), "", ""]));
   lines.push("");
 
   // ── Planning Timeline ───────────────────────────────────────────────────
@@ -139,13 +140,13 @@ export function generateGoogleSheetsCsv(planData: GeminiResponse): string {
 
   // ── Vendor Checklist ────────────────────────────────────────────────────
   lines.push(csvRow(["VENDOR CHECKLIST"]));
-  lines.push(csvRow(["Service", "Estimated Cost", "Status", "Vetting Questions"]));
+  lines.push(csvRow(["Service", `Estimated Cost (${currency})`, "Status", "Vetting Questions"]));
 
   for (const vendor of planData.vendorChecklist) {
     lines.push(
       csvRow([
         vendor.service,
-        vendor.estimatedCost,
+        formatCurrency(vendor.estimatedCost, currency),
         vendor.status,
         vendor.vettingQuestions.join(" | "),
       ])

@@ -48,18 +48,23 @@ export function buildUserPrompt(data: ClientIntake): string {
   const location = xmlWrap(sanitizeInput(data.location));
   const themePrefs = xmlWrap(sanitizeInput(data.themePreferences));
   const specialReqs = xmlWrap(sanitizeInput(data.specialRequirements));
+  const currencyCode = data.currency ?? "INR";
+  const currency = xmlWrap(sanitizeInput(currencyCode));
 
   return `Generate a complete event plan for the following event profile:
 
 <event_profile>
-  Event Type:         ${eventType}
-  Event Date:         ${eventDate}
-  Location:           ${location}
-  Total Budget:       ${data.totalBudget}
-  Guest Count:        ${data.guestCount}
-  Theme Preferences:  ${themePrefs}
+  Event Type:           ${eventType}
+  Event Date:           ${eventDate}
+  Location:             ${location}
+  Currency:             ${currency}
+  Total Budget:         ${currencyCode} ${data.totalBudget}
+  Guest Count:          ${data.guestCount}
+  Theme Preferences:    ${themePrefs}
   Special Requirements: ${specialReqs}
-</event_profile>`;
+</event_profile>
+
+CRITICAL: All financial figures (budget allocations, total costs, vendor estimates) MUST be denominated in ${currencyCode}.`;
 }
 
 /**

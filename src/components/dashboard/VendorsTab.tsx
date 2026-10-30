@@ -8,8 +8,8 @@
 
 import { memo, useId, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import type { GeminiResponse } from "@/lib/schemas";
-import { formatCurrency } from "./BudgetTab";
+import type { GeminiResponse, Currency } from "@/lib/schemas";
+import { formatCurrency } from "@/lib/format";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -37,12 +37,13 @@ const STATUS_COLORS: Record<VendorStatus, string> = {
 
 interface VendorsTabProps {
   plan: GeminiResponse;
+  currency?: Currency;
 }
 
 /**
  * Renders the vendor checklist with collapsible vetting interview questions.
  */
-const VendorsTab = memo(function VendorsTab({ plan }: VendorsTabProps) {
+const VendorsTab = memo(function VendorsTab({ plan, currency = "INR" }: VendorsTabProps) {
   const headingId = useId();
   const panelId = useId();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -84,7 +85,7 @@ const VendorsTab = memo(function VendorsTab({ plan }: VendorsTabProps) {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
-                    Est. {formatCurrency(vendor.estimatedCost)}
+                    Est. {formatCurrency(vendor.estimatedCost, currency)}
                   </p>
                 </div>
                 <button

@@ -9,6 +9,7 @@ export const VALID_INTAKE: ClientIntake = {
   eventType: "wedding",
   eventDate: "2027-06-15",
   location: "Grand Ballroom, Mumbai",
+  currency: "INR",
   totalBudget: 500000,
   guestCount: 150,
   themePreferences: "Rustic bohemian with fairy lights",
