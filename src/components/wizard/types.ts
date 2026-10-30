@@ -9,25 +9,47 @@ export interface WizardStep {
   icon: ReactNode;
 }
 
-export interface StepProps {
+export interface Step0Props {
   formId: string;
+  value: EventType | undefined;
+  onChange: (type: EventType) => void;
+  error?: string;
+  registerRef: (field: string, el: HTMLElement | null) => void;
+}
+
+export interface Step1Props {
+  formId: string;
+  eventDate?: string;
+  location?: string;
   errors: FieldErrors;
-  eventType: EventType | "";
-  setEventType: (v: EventType) => void;
-  eventDate: string;
-  setEventDate: (v: string) => void;
-  location: string;
-  setLocation: (v: string) => void;
+  onChange: <K extends "eventDate" | "location">(field: K, value: string) => void;
+  clearError: (field: keyof FieldErrors) => void;
+  registerRef: (field: string, el: HTMLElement | null) => void;
+}
+
+export interface Step2Props {
+  formId: string;
   currency: Currency;
-  setCurrency: (v: Currency) => void;
-  totalBudget: string;
-  setTotalBudget: (v: string) => void;
-  guestCount: string;
-  setGuestCount: (v: string) => void;
-  themePreferences: string;
-  setThemePreferences: (v: string) => void;
-  specialRequirements: string;
-  setSpecialRequirements: (v: string) => void;
+  totalBudget?: number;
+  guestCount?: number;
+  errors: FieldErrors;
+  onChange: <K extends "currency" | "totalBudget" | "guestCount">(
+    field: K,
+    value: ClientIntake[K] | undefined
+  ) => void;
+  clearError: (field: keyof FieldErrors) => void;
+  registerRef: (field: string, el: HTMLElement | null) => void;
+}
+
+export interface Step3Props {
+  formId: string;
+  themePreferences?: string;
+  specialRequirements?: string;
+  error?: string;
+  onChange: <K extends "themePreferences" | "specialRequirements">(
+    field: K,
+    value: string
+  ) => void;
   clearError: (field: keyof FieldErrors) => void;
   registerRef: (field: string, el: HTMLElement | null) => void;
 }

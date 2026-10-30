@@ -2,18 +2,17 @@ import { CalendarDays, MapPin } from "lucide-react";
 import { tomorrowDateString } from "@/lib/date";
 import { LIMITS } from "@/lib/config";
 import { FormField, TextInput, FieldError } from "./primitives";
-import type { StepProps } from "./types";
+import type { Step1Props } from "./types";
 
 export function Step1Details({
   formId,
-  errors,
   eventDate,
-  setEventDate,
   location,
-  setLocation,
+  errors,
+  onChange,
   clearError,
   registerRef,
-}: StepProps) {
+}: Step1Props) {
   const minDateStr = tomorrowDateString();
 
   return (
@@ -33,9 +32,9 @@ export function Step1Details({
           inputRef={(el) => registerRef("eventDate", el)}
           id={`${formId}-date`}
           type="date"
-          value={eventDate}
+          value={eventDate ?? ""}
           onChange={(e) => {
-            setEventDate(e.target.value);
+            onChange("eventDate", e.target.value);
             clearError("eventDate");
           }}
           min={minDateStr}
@@ -60,9 +59,9 @@ export function Step1Details({
         <TextInput
           inputRef={(el) => registerRef("location", el)}
           id={`${formId}-location`}
-          value={location}
+          value={location ?? ""}
           onChange={(e) => {
-            setLocation(e.target.value);
+            onChange("location", e.target.value);
             clearError("location");
           }}
           placeholder="e.g. Grand Ballroom, Mumbai"

@@ -2,20 +2,18 @@ import { Wallet, Users } from "lucide-react";
 import { LIMITS } from "@/lib/config";
 import type { Currency } from "@/lib/schemas";
 import { FormField, TextInput, FieldError } from "./primitives";
-import type { StepProps } from "./types";
+import type { Step2Props } from "./types";
 
 export function Step2Budget({
   formId,
-  errors,
   currency,
-  setCurrency,
   totalBudget,
-  setTotalBudget,
   guestCount,
-  setGuestCount,
+  errors,
+  onChange,
   clearError,
   registerRef,
-}: StepProps) {
+}: Step2Props) {
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -34,7 +32,7 @@ export function Step2Budget({
               ref={(el) => registerRef("currency", el)}
               id={`${formId}-currency`}
               value={currency}
-              onChange={(e) => setCurrency(e.target.value as Currency)}
+              onChange={(e) => onChange("currency", e.target.value as Currency)}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
             >
               <option value="INR">INR (₹)</option>
@@ -61,9 +59,10 @@ export function Step2Budget({
               inputRef={(el) => registerRef("totalBudget", el)}
               id={`${formId}-budget`}
               type="number"
-              value={totalBudget}
+              value={totalBudget ?? ""}
               onChange={(e) => {
-                setTotalBudget(e.target.value);
+                const raw = e.target.value;
+                onChange("totalBudget", raw === "" ? undefined : parseFloat(raw));
                 clearError("totalBudget");
               }}
               placeholder="e.g. 500000"
@@ -96,9 +95,10 @@ export function Step2Budget({
           inputRef={(el) => registerRef("guestCount", el)}
           id={`${formId}-guests`}
           type="number"
-          value={guestCount}
+          value={guestCount ?? ""}
           onChange={(e) => {
-            setGuestCount(e.target.value);
+            const raw = e.target.value;
+            onChange("guestCount", raw === "" ? undefined : parseInt(raw, 10));
             clearError("guestCount");
           }}
           placeholder="e.g. 150"

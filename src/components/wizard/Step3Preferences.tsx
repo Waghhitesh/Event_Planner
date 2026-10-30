@@ -1,17 +1,19 @@
 import { LIMITS } from "@/lib/config";
 import { FormField, TextArea, FieldError } from "./primitives";
-import type { StepProps } from "./types";
+import type { Step3Props } from "./types";
 
 export function Step3Preferences({
   formId,
-  errors,
   themePreferences,
-  setThemePreferences,
   specialRequirements,
-  setSpecialRequirements,
+  error,
+  onChange,
   clearError,
   registerRef,
-}: StepProps) {
+}: Step3Props) {
+  const theme = themePreferences ?? "";
+  const special = specialRequirements ?? "";
+
   return (
     <div className="space-y-5">
       <FormField
@@ -27,21 +29,21 @@ export function Step3Preferences({
         <TextArea
           textareaRef={(el) => registerRef("themePreferences", el)}
           id={`${formId}-theme`}
-          value={themePreferences}
+          value={theme}
           onChange={(e) => {
-            setThemePreferences(e.target.value);
+            onChange("themePreferences", e.target.value);
             clearError("themePreferences");
           }}
           placeholder="e.g. Rustic bohemian with fairy lights, blush and gold colour palette, outdoor garden setting"
           maxLength={LIMITS.THEME_FIELD_MAX}
-          error={errors.themePreferences}
+          error={error}
           errorId={`${formId}-theme-error`}
           hintId={`${formId}-theme-hint`}
         />
         <p id={`${formId}-theme-hint`} className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-          {themePreferences.length}/{LIMITS.THEME_FIELD_MAX} characters
+          {theme.length}/{LIMITS.THEME_FIELD_MAX} characters
         </p>
-        <FieldError id={`${formId}-theme-error`} message={errors.themePreferences} />
+        <FieldError id={`${formId}-theme-error`} message={error} />
       </FormField>
 
       <FormField
@@ -58,8 +60,8 @@ export function Step3Preferences({
         <TextArea
           textareaRef={(el) => registerRef("specialRequirements", el)}
           id={`${formId}-special`}
-          value={specialRequirements}
-          onChange={(e) => setSpecialRequirements(e.target.value)}
+          value={special}
+          onChange={(e) => onChange("specialRequirements", e.target.value)}
           placeholder="e.g. Dietary restrictions, accessibility needs, specific vendors to avoid, cultural customs"
           maxLength={LIMITS.SPECIAL_REQS_MAX}
           error={undefined}
@@ -68,7 +70,7 @@ export function Step3Preferences({
           required={false}
         />
         <p id={`${formId}-special-hint`} className="mt-1 text-xs text-gray-600 dark:text-gray-400">
-          {specialRequirements.length}/{LIMITS.SPECIAL_REQS_MAX} characters
+          {special.length}/{LIMITS.SPECIAL_REQS_MAX} characters
         </p>
       </FormField>
     </div>

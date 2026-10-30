@@ -7,13 +7,14 @@
  * focus management, and visible focus indicators.
  *
  * Architecture:
- *  - One component per step (Step0EventType, Step1Details, Step2Budget, Step3Preferences)
- *  - Shared primitives in ./wizard/primitives
- *  - Step validation uses ClientIntakeSchema.pick().safeParse — no duplicated rules
+ *  - One component per step with explicit isolated props
+ *  - useWizardForm hook manages single values object + typed updates + errors
+ *  - Step validation uses ClientIntakeSchema.pick().safeParse directly
  */
 
 import { useState, useEffect, useRef, useId, useCallback } from "react";
-import type { ClientIntake, EventType, Currency, GeminiResponse } from "@/lib/schemas";
+import type { ClientIntake, GeminiResponse } from "@/lib/schemas";
+import { ClientIntakeSchema } from "@/lib/schemas";
 import { AlertTriangle } from "lucide-react";
 import { STEPS, FIELD_ID_MAP, STEP_SCHEMAS } from "./wizard/constants";
 import { WizardProgress } from "./wizard/WizardProgress";
@@ -22,7 +23,8 @@ import { Step0EventType } from "./wizard/Step0EventType";
 import { Step1Details } from "./wizard/Step1Details";
 import { Step2Budget } from "./wizard/Step2Budget";
 import { Step3Preferences } from "./wizard/Step3Preferences";
-import type { FieldErrors, StepProps } from "./wizard/types";
+import { useWizardForm } from "./wizard/useWizardForm";
+import type { FieldErrors } from "./wizard/types";
 
 interface EventWizardProps {
   onPlanGenerated: (plan: GeminiResponse, intake: ClientIntake) => void;
@@ -41,16 +43,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // Form state
-  const [eventType, setEventType] = useState<EventType | "">("");
-  const [eventDate, setEventDate] = useState("");
-  const [location, setLocation] = useState("");
-  const [currency, setCurrency] = useState<Currency>("INR");
-  const [totalBudget, setTotalBudget] = useState("");
-  const [guestCount, setGuestCount] = useState("");
-  const [themePreferences, setThemePreferences] = useState("");
-  const [specialRequirements, setSpecialRequirements] = useState("");
-  const [errors, setErrors] = useState<FieldErrors>({});
+  const { values, errors, setErrors, update, clearError, resetErrors } = useWizardForm();
 
   const isFirstRender = useRef(true);
   useEffect(() => {
@@ -61,35 +54,13 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     stepHeadingRef.current?.focus();
   }, [currentStep]);
 
-  function clearError(field: keyof FieldErrors) {
-    setErrors((prev) => {
-      if (!prev[field]) return prev;
-      const next = { ...prev };
-      delete next[field];
-      return next;
-    });
-  }
-
   function validateStep(step: number): boolean {
     const schema = STEP_SCHEMAS[step];
     if (!schema) return true;
 
-    const stepData: Record<string, unknown> = {};
-    if (step === 0) stepData.eventType = eventType || undefined;
-    if (step === 1) {
-      stepData.eventDate = eventDate || undefined;
-      stepData.location = location;
-    }
-    if (step === 2) {
-      stepData.totalBudget = totalBudget ? parseFloat(totalBudget) : undefined;
-      stepData.guestCount = guestCount ? parseInt(guestCount, 10) : undefined;
-      stepData.currency = currency;
-    }
-    if (step === 3) stepData.themePreferences = themePreferences;
-
-    const result = schema.safeParse(stepData);
+    const result = schema.safeParse(values);
     if (result.success) {
-      setErrors({});
+      resetErrors();
       return true;
     }
 
@@ -129,7 +100,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
   function handleBack() {
     if (currentStep > 0) {
       setCurrentStep((s) => s - 1);
-      setErrors({});
+      resetErrors();
     }
   }
 
@@ -137,16 +108,12 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     setIsLoading(true);
     setApiError(null);
 
-    const intake: ClientIntake = {
-      eventType: eventType as EventType,
-      eventDate,
-      location,
-      currency,
-      totalBudget: parseFloat(totalBudget),
-      guestCount: parseInt(guestCount, 10),
-      themePreferences,
-      specialRequirements,
-    };
+    const parsed = ClientIntakeSchema.safeParse(values);
+    if (!parsed.success) {
+      setIsLoading(false);
+      return;
+    }
+    const intake: ClientIntake = parsed.data;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 55_000);
@@ -201,13 +168,6 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     }
   }
 
-  const stepProps: StepProps = {
-    formId, errors, eventType, setEventType, eventDate, setEventDate,
-    location, setLocation, currency, setCurrency, totalBudget, setTotalBudget,
-    guestCount, setGuestCount, themePreferences, setThemePreferences,
-    specialRequirements, setSpecialRequirements, clearError, registerRef,
-  };
-
   return (
     <section aria-label="Event planning wizard" className="w-full max-w-2xl mx-auto">
       <WizardProgress steps={STEPS} currentStep={currentStep} />
@@ -242,10 +202,49 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
         )}
 
         <div aria-labelledby={`${formId}-step-heading`}>
-          {currentStep === 0 && <Step0EventType {...stepProps} />}
-          {currentStep === 1 && <Step1Details {...stepProps} />}
-          {currentStep === 2 && <Step2Budget {...stepProps} />}
-          {currentStep === 3 && <Step3Preferences {...stepProps} />}
+          {currentStep === 0 && (
+            <Step0EventType
+              formId={formId}
+              value={values.eventType}
+              onChange={(val) => update("eventType", val)}
+              error={errors.eventType}
+              registerRef={registerRef}
+            />
+          )}
+          {currentStep === 1 && (
+            <Step1Details
+              formId={formId}
+              eventDate={values.eventDate}
+              location={values.location}
+              errors={errors}
+              onChange={update}
+              clearError={clearError}
+              registerRef={registerRef}
+            />
+          )}
+          {currentStep === 2 && (
+            <Step2Budget
+              formId={formId}
+              currency={values.currency ?? "INR"}
+              totalBudget={values.totalBudget}
+              guestCount={values.guestCount}
+              errors={errors}
+              onChange={update}
+              clearError={clearError}
+              registerRef={registerRef}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step3Preferences
+              formId={formId}
+              themePreferences={values.themePreferences}
+              specialRequirements={values.specialRequirements}
+              error={errors.themePreferences}
+              onChange={update}
+              clearError={clearError}
+              registerRef={registerRef}
+            />
+          )}
         </div>
 
         <WizardNav

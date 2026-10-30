@@ -23,7 +23,7 @@ export const INPUT_OK = "border-gray-300 dark:border-gray-600";
 
 export interface TextInputProps {
   id: string;
-  value: string;
+  value: string | number;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   type?: string;
   placeholder?: string;

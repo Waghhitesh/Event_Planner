@@ -1,23 +1,22 @@
 import { EVENT_TYPES } from "./constants";
 import { FieldError } from "./primitives";
-import type { StepProps } from "./types";
+import type { Step0Props } from "./types";
 
 export function Step0EventType({
   formId,
-  errors,
-  eventType,
-  setEventType,
-  clearError,
+  value,
+  onChange,
+  error,
   registerRef,
-}: StepProps) {
+}: Step0Props) {
   const errorId = `${formId}-eventType-error`;
   return (
-    <fieldset className="border-0 p-0 m-0" aria-describedby={errors.eventType ? errorId : undefined}>
+    <fieldset className="border-0 p-0 m-0" aria-describedby={error ? errorId : undefined}>
       <legend className="sr-only">Select your event type</legend>
       <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-required="true">
         {EVENT_TYPES.map((type, idx) => {
           const inputId = `${formId}-event-type-${type.value}`;
-          const isSelected = eventType === type.value;
+          const isSelected = value === type.value;
           return (
             <label
               key={type.value}
@@ -39,10 +38,7 @@ export function Step0EventType({
                 name="eventType"
                 value={type.value}
                 checked={isSelected}
-                onChange={() => {
-                  setEventType(type.value);
-                  clearError("eventType");
-                }}
+                onChange={() => onChange(type.value)}
                 className="sr-only"
                 aria-describedby={`${inputId}-desc`}
               />
@@ -77,7 +73,7 @@ export function Step0EventType({
           );
         })}
       </div>
-      <FieldError id={errorId} message={errors.eventType} />
+      <FieldError id={errorId} message={error} />
     </fieldset>
   );
 }
