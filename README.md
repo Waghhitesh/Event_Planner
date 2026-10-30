@@ -28,7 +28,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 | UI | TailwindCSS v4, Lucide React |
 | AI | Google Gemini Flash (`@google/generative-ai`) |
 | Validation | Zod v4 |
-| Testing | Vitest v5 (184 tests, jsdom + node, >97% line coverage, 86% branch) |
+| Testing | Vitest v5 (210 tests, jsdom + node, >97% line coverage, 87% branch) |
 | CI/CD | GitHub Actions (6 jobs: secret scan, install, lint, typecheck, audit, test, build) |
 
 ---
@@ -134,7 +134,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 
 ### Prerequisites
 
-- **Node.js**: `>=22.22.2` (or Node 24.x) — see `.nvmrc` (`nvm use`)
+- **Node.js**: `>=22` (or Node 24.x) — see `.nvmrc` (`nvm use`)
 - **npm**: `>=10.0.0`
 - **Google AI Studio API Key**: Free tier supported (no credit card required)
 
@@ -190,35 +190,60 @@ src/
 ├── components/
 │   ├── dashboard/
 │   │   ├── BudgetTab.tsx     — Budget breakdown with progress bars
-│   │   ├── GoogleActions.tsx — Calendar sync, CSV export, Print button
+│   │   ├── GoogleActions.tsx — Calendar sync, CSV export, .ics export, Print
 │   │   ├── IdeasTab.tsx      — Personalised ideas grid
 │   │   ├── TimelineTab.tsx   — Timeline with localStorage-persisted checkboxes
 │   │   └── VendorsTab.tsx    — Vendor checklist with collapsible vetting questions
+│   ├── ui/
+│   │   ├── Badge.tsx         — Shared Badge primitive (variant styling)
+│   │   ├── Button.tsx        — Shared Button + LinkButton primitives
+│   │   ├── Card.tsx          — Shared Card primitive
+│   │   └── index.ts          — Re-exports for all UI primitives
+│   ├── wizard/
+│   │   ├── SelectEventType.tsx — Step 0: event type selection
+│   │   ├── Step1Details.tsx    — Step 1: name, date, guest count, location
+│   │   ├── Step2Budget.tsx     — Step 2: budget and currency
+│   │   ├── Step3Preferences.tsx— Step 3: theme and special requests
+│   │   ├── WizardNav.tsx       — Previous / Next / Submit navigation
+│   │   └── WizardProgress.tsx  — Progress bar with aria-valuenow
 │   ├── DashboardView.tsx     — Tabbed dashboard shell
 │   ├── EventWizard.tsx       — 4-step WCAG 2.1 AA intake wizard
 │   └── PlannerApp.tsx        — Client-side wizard↔dashboard state orchestrator
 └── lib/
     ├── config.ts             — Single-sourced constants (model, limits, thresholds)
-    ├── date.ts               — Timezone-safe date helpers
+    ├── date.ts               — Timezone-safe date helpers + isRealDate validator
+    ├── format.ts             — Multi-currency number formatting
     ├── gemini.ts             — Lazy Gemini client, responseSchema, model factory
-    ├── google-integrations.ts — Calendar URL, CSV export, filename slugifier
+    ├── generate-plan.ts      — 2-attempt Gemini orchestration; returns typed result
+    ├── google-integrations.ts — Calendar URL, CSV export, .ics generator, filename slugifier
+    ├── http.ts               — jsonError / rateLimitedResponse helpers
+    ├── logger.ts             — [EventPulse]-prefixed logger; silent in test env
+    ├── plan-cache.ts         — In-memory LRU+TTL plan cache (SHA-256 keyed)
     ├── plan-validation.ts    — Plan invariant validator + deterministic normaliser
     ├── prompt.ts             — System instruction + user/corrective prompt builders
+    ├── rate-limit.ts         — Sliding-window rate limiter with auto-pruning
     ├── schemas.ts            — Zod schemas (intake + Gemini response)
     └── security.ts           — sanitizeInput, xmlWrap, sanitizeOutput
-tests/
-    ├── fixtures.ts           — Shared MOCK_PLAN and VALID_INTAKE
-    ├── dashboard.component.test.tsx — Tab navigation, state preservation, axe
-    ├── format.test.ts        — Multi-currency formatting & schema tests
-    ├── gemini.test.ts        — Lazy client factory tests
-    ├── google-integrations.test.ts
-    ├── plan-validation.test.ts
-    ├── planner-app.component.test.tsx
-    ├── prompt.test.ts
-    ├── route.test.ts
-    ├── schemas.test.ts
-    ├── security.test.ts
-    └── wizard.component.test.tsx   — Form flow, validation focus, submit, axe
+src/tests/
+    ├── fixtures.ts                       — Shared MOCK_PLAN and VALID_INTAKE
+    ├── dashboard.component.test.tsx      — Tab navigation, state, h1 focus, axe (11)
+    ├── format.test.ts                    — Multi-currency formatting & schema tests (9)
+    ├── gemini.test.ts                    — Lazy client factory tests (2)
+    ├── generate-plan.test.ts             — Orchestration, quota, timeout, repair (20)
+    ├── google-integrations.test.ts       — Calendar URL, CSV, .ics, formula injection (36)
+    ├── http.test.ts                      — Error response formatting (3)
+    ├── logger.test.ts                    — Silent in test env, prefix in production (2)
+    ├── plan-cache.test.ts                — LRU/TTL cache, eviction, key hashing (6)
+    ├── plan-validation.test.ts           — Invariants, normalisation, budget arithmetic (19)
+    ├── planner-app.component.test.tsx    — Wizard↔dashboard orchestration (2)
+    ├── prompt.test.ts                    — System instruction, XML sandbox, prompts (14)
+    ├── rate-limit.test.ts                — Sliding window limiter, pruning (4)
+    ├── route.test.ts                     — Happy path, 400/413/429/502/504, cache (18)
+    ├── schemas.test.ts                   — Zod intake + response validation (16)
+    ├── security.test.ts                  — sanitizeInput, injection patterns, BOM (25)
+    ├── ui-primitives.test.tsx            — Button, Card, Badge rendering & variants (7)
+    ├── use-wizard-form.test.ts           — Form state, field updates, errors (3)
+    └── wizard.component.test.tsx         — Form flow, focus, submit, error handling (13)
 ```
 
 ---
@@ -226,25 +251,26 @@ tests/
 ## Test Coverage
 
 | Suite | Tests | Focus |
-|---|---|---|
-| security | 22 | sanitizeInput, xmlWrap, Unicode evasion, false-positive regression |
-| google-integrations | 27 | Calendar URL, CSV export, formula injection, filename slug |
+|---|---|---|-
+| security | 25 | sanitizeInput, xmlWrap, Unicode evasion, broader injection patterns, false-positive regression |
+| google-integrations | 36 | Calendar URL, CSV export (raw numbers, BOM), formula injection, filename slug, RFC 5545 .ics |
 | route | 18 | Happy path, 400/413/429/502/504, cache, rate limit, timeout, abort, body |
 | generate-plan | 20 | 2-attempt orchestration, quota detection, timeout, invariant repair |
-| schemas | 14 | Zod intake + response validation, SDK/Zod key parity |
-| plan-validation | 13 | Invariant checks, normalisation, budget arithmetic |
-| prompt | 13 | System instruction, XML sandbox, corrective prompt, default currency |
-| wizard.component | 13 | Step validation, focus management, payload submission, error handling, axe |
-| dashboard.component | 9 | Keyboard navigation, state persistence, h1 focus, axe accessibility |
+| schemas | 16 | Zod intake + response validation, date horizon, SDK/Zod key parity |
+| plan-validation | 19 | Invariant checks, normalisation, budget arithmetic, daysBeforeEvent range, vendor cost sum |
+| prompt | 14 | System instruction, XML sandbox, corrective prompt, daysUntilEvent injection |
+| wizard.component | 13 | Step validation, focus management, payload submission, error handling (429/504/non-JSON), axe |
+| dashboard.component | 11 | Keyboard navigation, state persistence, h1 focus, accessible tab names, axe accessibility |
 | format | 9 | Multi-currency formatting (INR, USD, EUR, GBP), locale fallback |
 | plan-cache | 6 | In-memory LRU/TTL cache, eviction, key hashing |
-| ui-primitives | 6 | Button, Card, Badge rendering, button type, and variant styling |
+| ui-primitives | 7 | Button/LinkButton, Card, Badge rendering, default type, variant styling |
 | rate-limit | 4 | Sliding window limiter, automatic entry pruning |
 | http | 3 | Error response formatting and Retry-After headers |
 | use-wizard-form | 3 | Form state management, field updates, error handling |
+| logger | 2 | Silent in test env, [EventPulse] prefix in production |
 | gemini | 2 | Lazy factory initialisation and model config |
 | planner-app.component | 2 | App view orchestration, wizard→dashboard→Start Over |
-| **Total** | **184** | **97.33% lines, 86.50% branch, 96.21% functions** |
+| **Total** | **210** | **97.67% lines, 87.56% branch, 96.68% functions** |
 
 ---
 
