@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 /** Default Gemini model name used when GEMINI_MODEL env var is not set. */
-export const DEFAULT_GEMINI_MODEL = "gemini-2.0-flash" as const;
+export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash" as const;
 
 /** Human-readable display name shown in UI and docs. */
 export const MODEL_DISPLAY_NAME = "Gemini Flash" as const;

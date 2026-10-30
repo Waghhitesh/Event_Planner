@@ -161,7 +161,7 @@ npm run build
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `GEMINI_API_KEY` | ✅ Yes | — | Google AI Studio API key |
-| `GEMINI_MODEL` | No | `gemini-2.0-flash` | Override the Gemini model |
+| `GEMINI_MODEL` | No | `gemini-3.8-flash` | Override the Gemini model |
 
 ---
 

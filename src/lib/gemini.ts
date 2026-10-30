@@ -194,7 +194,7 @@ export const generationConfig: GenerationConfig = {
  * Calls getGenAI() which will throw if the API key is missing.
  */
 export function getGeminiModel() {
-  const modelName = process.env.GEMINI_MODEL ?? DEFAULT_GEMINI_MODEL;
+  const modelName = process.env.GEMINI_MODEL || DEFAULT_GEMINI_MODEL;
   return getGenAI().getGenerativeModel({
     model: modelName,
     generationConfig,
