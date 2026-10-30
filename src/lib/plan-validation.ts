@@ -47,8 +47,8 @@ export function validatePlanInvariants(
   // 1. Budget arithmetic check
   const sum = plan.budgetBreakdown.reduce((acc, item) => acc + item.allocatedAmount, 0);
   const diff = Math.abs(sum - plan.totalEstimatedCost);
-  const tolerance = plan.totalEstimatedCost * PLAN_THRESHOLDS.BUDGET_TOLERANCE;
-  if (diff > tolerance && plan.totalEstimatedCost > 0) {
+  const tolerance = Math.max(plan.totalEstimatedCost * PLAN_THRESHOLDS.BUDGET_TOLERANCE, 1);
+  if (diff > tolerance) {
     errors.push(
       `Budget sum mismatch: items sum to ${sum} but totalEstimatedCost is ${plan.totalEstimatedCost} (diff=${diff.toFixed(2)}, tolerance=${tolerance.toFixed(2)})`
     );
@@ -58,6 +58,14 @@ export function validatePlanInvariants(
   if (plan.totalEstimatedCost > intake.totalBudget) {
     errors.push(
       `totalEstimatedCost (${plan.totalEstimatedCost}) exceeds user's totalBudget (${intake.totalBudget})`
+    );
+  }
+
+  // 2b. Vendor cost sum must not exceed user's budget
+  const vendorCostSum = plan.vendorChecklist.reduce((acc, v) => acc + v.estimatedCost, 0);
+  if (vendorCostSum > intake.totalBudget) {
+    errors.push(
+      `Vendor checklist cost sum (${vendorCostSum}) exceeds user's totalBudget (${intake.totalBudget})`
     );
   }
 
@@ -154,6 +162,11 @@ export function normalisePlan(plan: GeminiResponse, intake: ClientIntake): Gemin
     };
   }
 
+  const normalisedVendors = plan.vendorChecklist.map((vendor) => ({
+    ...vendor,
+    estimatedCost: Math.round(vendor.estimatedCost * scaleFactor),
+  }));
+
   const N = daysUntilEvent(intake.eventDate);
   const normalisedTimeline = [...plan.timeline]
     .map((phase) => ({
@@ -167,5 +180,6 @@ export function normalisePlan(plan: GeminiResponse, intake: ClientIntake): Gemin
     totalEstimatedCost: Math.round(targetTotal),
     budgetBreakdown: normalisedBreakdown,
     timeline: normalisedTimeline,
+    vendorChecklist: normalisedVendors,
   };
 }

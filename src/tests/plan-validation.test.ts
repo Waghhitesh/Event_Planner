@@ -35,6 +35,16 @@ describe("validatePlanInvariants — budget arithmetic", () => {
     const result = validatePlanInvariants(MOCK_PLAN, VALID_INTAKE);
     expect(result.valid).toBe(true);
   });
+
+  it("flags totalEstimatedCost = 0 when budget items have positive sum", () => {
+    const zeroTotalPlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      totalEstimatedCost: 0,
+    };
+    const result = validatePlanInvariants(zeroTotalPlan, VALID_INTAKE);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Budget sum mismatch"))).toBe(true);
+  });
 });
 
 describe("validatePlanInvariants — over budget", () => {
@@ -50,6 +60,24 @@ describe("validatePlanInvariants — over budget", () => {
     const result = validatePlanInvariants(overBudgetPlan, VALID_INTAKE);
     expect(result.valid).toBe(false);
     expect(result.errors.some((e) => e.includes("totalEstimatedCost"))).toBe(true);
+  });
+
+  it("flags vendor checklist cost sum exceeding intake totalBudget", () => {
+    const overVendorPlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      vendorChecklist: [
+        {
+          service: "Super Luxury Catering",
+          estimatedCost: VALID_INTAKE.totalBudget + 50000,
+          vettingQuestions: ["Q1", "Q2", "Q3", "Q4"],
+          status: "not_started",
+        },
+        ...MOCK_PLAN.vendorChecklist.slice(1),
+      ],
+    };
+    const result = validatePlanInvariants(overVendorPlan, VALID_INTAKE);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("Vendor checklist cost sum"))).toBe(true);
   });
 });
 
@@ -184,6 +212,9 @@ describe("normalisePlan", () => {
     };
     const normalised = normalisePlan(overPlan, VALID_INTAKE);
     expect(normalised.totalEstimatedCost).toBeLessThanOrEqual(VALID_INTAKE.totalBudget);
+    // Vendor costs are also scaled down proportionally
+    const initialVendorCost = MOCK_PLAN.vendorChecklist[0]?.estimatedCost ?? 0;
+    expect(normalised.vendorChecklist[0]?.estimatedCost).toBeLessThan(initialVendorCost);
   });
 
   it("does not scale when sum is already within budget", () => {
