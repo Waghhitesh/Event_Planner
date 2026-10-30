@@ -51,7 +51,7 @@ jobs:
         run: npm ci
 
       - name: Cache node_modules
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -74,7 +74,7 @@ jobs:
           cache: npm
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -101,7 +101,7 @@ jobs:
           cache: npm
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -128,7 +128,7 @@ jobs:
           cache: npm
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -157,7 +157,7 @@ jobs:
           cache: npm
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
@@ -194,7 +194,7 @@ jobs:
           cache: npm
 
       - name: Restore node_modules
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: node_modules
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
