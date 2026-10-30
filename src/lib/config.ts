@@ -46,6 +46,15 @@ export const LIMITS = {
   /** Sliding-window rate limit: window duration in milliseconds. */
   RATE_LIMIT_WINDOW_MS: 60_000,
 
+  /** Sliding-window rate limit: threshold above which expired entries are pruned. */
+  RATE_LIMIT_PRUNE_THRESHOLD: 200,
+
+  /** Retry-After duration in seconds sent on 429 response. */
+  RATE_LIMIT_RETRY_AFTER_SECONDS: 60,
+
+  /** Shared deadline for all Gemini calls within a single plan generation request (ms). */
+  OVERALL_TIMEOUT_MS: 50_000,
+
   /** In-memory plan cache TTL in milliseconds (10 minutes). */
   CACHE_TTL_MS: 10 * 60 * 1_000,
 
