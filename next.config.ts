@@ -30,12 +30,14 @@ const nextConfig: NextConfig = {
               // Next.js App Router requires 'unsafe-inline' for styles in dev;
               // in production Turbopack inlines critical CSS.
               "style-src 'self' 'unsafe-inline'",
-              // Next.js requires 'unsafe-eval' for dev HMR; restrict in prod.
+              // Next.js App Router inline hydration scripts require 'unsafe-inline'.
+              // Nonces are incompatible with PPR (partialPrefetching) and cacheComponents
+              // per official Next.js CSP documentation.
               process.env.NODE_ENV === "production"
-                ? "script-src 'self'"
-                : "script-src 'self' 'unsafe-eval'",
-              // API route calls Gemini (external); calendar link opens google.com
-              "connect-src 'self' https://generativelanguage.googleapis.com",
+                ? "script-src 'self' 'unsafe-inline'"
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              // Only client connections are governed by this header; Gemini is called server-side only
+              "connect-src 'self'",
               "img-src 'self' data:",
               "frame-ancestors 'none'",
               "base-uri 'self'",
@@ -57,7 +59,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Strict-Transport-Security",
-            value: "max-age=63072000; includeSubDomains; preload",
+            value: "max-age=63072000; includeSubDomains",
           },
           {
             key: "X-Frame-Options",
