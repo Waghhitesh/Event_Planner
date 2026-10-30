@@ -29,6 +29,15 @@ describe("plan-cache module", () => {
     const key3 = cacheKey({ ...VALID_INTAKE, totalBudget: VALID_INTAKE.totalBudget + 1000 });
     expect(key1).not.toBe(key2);
     expect(key1).not.toBe(key3);
+
+    // Default currency fallback if currency is undefined
+    const intakeNoCurrency = { ...VALID_INTAKE } as Record<string, unknown>;
+    delete intakeNoCurrency.currency;
+    expect(cacheKey(intakeNoCurrency as unknown as typeof VALID_INTAKE)).toBe(key1);
+  });
+
+  it("returns null on cache miss", () => {
+    expect(getFromCache("non-existent-key")).toBeNull();
   });
 
   it("stores and retrieves a plan before TTL expiration", () => {

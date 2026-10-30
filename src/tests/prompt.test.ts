@@ -61,6 +61,13 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("500000"); // totalBudget as number
     expect(prompt).toContain("150"); // guestCount as number
   });
+
+  it("defaults to INR when currency is omitted", () => {
+    const intakeNoCurrency = { ...VALID_INTAKE } as Record<string, unknown>;
+    delete intakeNoCurrency.currency;
+    const prompt = buildUserPrompt(intakeNoCurrency as unknown as typeof VALID_INTAKE);
+    expect(prompt).toContain("INR");
+  });
 });
 
 describe("buildCorrectivePrompt", () => {

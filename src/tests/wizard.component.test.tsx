@@ -126,6 +126,71 @@ describe("EventWizard Component", () => {
     expect(alert).toHaveTextContent(/Too many requests, please wait 60 seconds/i);
   });
 
+  it("displays fallback rate limit message on 429 response without Retry-After", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 429,
+      headers: new Headers(),
+      json: async () => ({ error: "Rate limit exceeded" }),
+    });
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/Too many requests, please wait a minute/i);
+  });
+
+  it("displays server error message when provided in JSON response", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: new Headers(),
+      json: async () => ({ error: "Custom backend error description" }),
+    });
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/Custom backend error description/i);
+  });
+
+  it("navigates back when Back button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+
+    // Step 0 -> Step 1
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    expect(screen.getByLabelText(/event date/i)).toBeInTheDocument();
+
+    // Click Back -> returns to Step 0
+    const backBtn = screen.getByRole("button", { name: /^back$/i });
+    await user.click(backBtn);
+    expect(screen.getByLabelText(/wedding/i)).toBeInTheDocument();
+  });
+
   it("displays timeout message on 504 response", async () => {
     const user = userEvent.setup();
     global.fetch = vi.fn().mockResolvedValue({
@@ -161,6 +226,73 @@ describe("EventWizard Component", () => {
         throw new Error("Invalid JSON");
       },
     });
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/Failed to generate plan/i);
+  });
+
+  it("displays timeout message when client fetch aborts with AbortError", async () => {
+    const user = userEvent.setup();
+    const abortErr = new Error("The user aborted a request.");
+    abortErr.name = "AbortError";
+    global.fetch = vi.fn().mockRejectedValue(abortErr);
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/The AI took too long, please try again/i);
+  });
+
+  it("displays generic error when server returns ok but null json", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      json: async () => null,
+    });
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/Failed to generate plan/i);
+  });
+
+  it("handles non-Error rejection during submit", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockRejectedValue("raw string rejection");
 
     render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
     await user.click(screen.getByLabelText(/wedding/i));

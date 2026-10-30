@@ -165,5 +165,99 @@ describe("generate-plan module", () => {
       }
       expect(mockGenerateContent).toHaveBeenCalledTimes(2);
     });
+
+    it("returns { ok: false, kind: 'timeout' } when attempt 2 is aborted", async () => {
+      const controller = new AbortController();
+      mockGenerateContent
+        .mockRejectedValueOnce(new Error("Transient network error"))
+        .mockImplementationOnce(async () => {
+          controller.abort();
+          throw new Error("Aborted");
+        });
+
+      const res = await generatePlan(VALID_INTAKE, controller.signal);
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.kind).toBe("timeout");
+      }
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("returns { ok: false, kind: 'quota' } when attempt 2 hits quota/rate-limit", async () => {
+      mockGenerateContent
+        .mockRejectedValueOnce(new Error("Transient error"))
+        .mockRejectedValueOnce(new Error("Resource has been exhausted (e.g. check quota)"));
+
+      const res = await generatePlan(VALID_INTAKE);
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.kind).toBe("quota");
+      }
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("normalizes plan when attempt 1 fails parse and attempt 2 succeeds but fails invariants", async () => {
+      const invalidPlan = {
+        ...MOCK_PLAN,
+        totalEstimatedCost: VALID_INTAKE.totalBudget + 100_000,
+      };
+
+      mockGenerateContent
+        .mockResolvedValueOnce({
+          response: { text: () => "malformed json" },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => JSON.stringify(invalidPlan) },
+        });
+
+      const res = await generatePlan(VALID_INTAKE);
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.plan.totalEstimatedCost).toBeLessThanOrEqual(VALID_INTAKE.totalBudget);
+      }
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("accepts valid plan from attempt 2 when attempt 1 failed invariants", async () => {
+      const invalidPlan = {
+        ...MOCK_PLAN,
+        totalEstimatedCost: VALID_INTAKE.totalBudget + 100_000,
+      };
+
+      mockGenerateContent
+        .mockResolvedValueOnce({
+          response: { text: () => JSON.stringify(invalidPlan) },
+        })
+        .mockResolvedValueOnce({
+          response: { text: () => JSON.stringify(MOCK_PLAN) },
+        });
+
+      const res = await generatePlan(VALID_INTAKE);
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.plan.totalEstimatedCost).toBe(MOCK_PLAN.totalEstimatedCost);
+      }
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
+
+    it("normalizes attempt 1 plan when corrective retry for invariant failure throws", async () => {
+      const invalidPlan = {
+        ...MOCK_PLAN,
+        totalEstimatedCost: VALID_INTAKE.totalBudget + 100_000,
+      };
+
+      mockGenerateContent
+        .mockResolvedValueOnce({
+          response: { text: () => JSON.stringify(invalidPlan) },
+        })
+        .mockRejectedValueOnce(new Error("Model connection reset"));
+
+      const res = await generatePlan(VALID_INTAKE);
+      expect(res.ok).toBe(true);
+      if (res.ok) {
+        expect(res.plan.totalEstimatedCost).toBeLessThanOrEqual(VALID_INTAKE.totalBudget);
+      }
+      expect(mockGenerateContent).toHaveBeenCalledTimes(2);
+    });
   });
 });

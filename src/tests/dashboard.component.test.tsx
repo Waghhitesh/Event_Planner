@@ -135,4 +135,69 @@ describe("DashboardView Component", () => {
     const collapseBtn = screen.getByLabelText(/collapse vetting questions for photography/i);
     await user.click(collapseBtn);
   });
+
+  it("renders budget breakdown with all priority levels and handles edge total amounts", () => {
+    const customPlan: typeof MOCK_PLAN = {
+      ...MOCK_PLAN,
+      totalEstimatedCost: 0,
+      budgetBreakdown: [
+        {
+          category: "Cat1",
+          allocatedAmount: 0,
+          priority: "critical" as const,
+          costSavingTip: "Tip 1",
+        },
+        {
+          category: "Cat2",
+          allocatedAmount: 0,
+          priority: "high" as const,
+          costSavingTip: "Tip 2",
+        },
+        {
+          category: "Cat3",
+          allocatedAmount: 0,
+          priority: "medium" as const,
+          costSavingTip: "Tip 3",
+        },
+        { category: "Cat4", allocatedAmount: 0, priority: "low" as const, costSavingTip: "Tip 4" },
+        {
+          category: "Cat5",
+          allocatedAmount: 0,
+          priority: "other" as unknown as "low",
+          costSavingTip: "Tip 5",
+        },
+      ],
+    };
+
+    render(<DashboardView {...defaultProps} plan={customPlan} />);
+    expect(screen.getByText("Cat1")).toBeInTheDocument();
+    expect(screen.getByText("Cat2")).toBeInTheDocument();
+    expect(screen.getByText("Cat3")).toBeInTheDocument();
+    expect(screen.getByText("Cat4")).toBeInTheDocument();
+    expect(screen.getByText("Cat5")).toBeInTheDocument();
+  });
+
+  it("safely handles corrupted localStorage in timeline task persistence", async () => {
+    const user = userEvent.setup();
+    // Put corrupt JSON in localStorage
+    localStorage.setItem("eventpulse-tasks-Dream-Beach-Wedding-500000", "invalid-json{{");
+
+    render(<DashboardView {...defaultProps} />);
+    const timelineTab = screen.getByRole("tab", { name: /timeline/i });
+    await user.click(timelineTab);
+
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes[0]).not.toBeChecked();
+
+    // Trigger toggle when setItem throws (quota exceeded)
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = vi.fn().mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+
+    await user.click(checkboxes[0]!);
+    expect(checkboxes[0]).toBeChecked();
+
+    localStorage.setItem = originalSetItem;
+  });
 });

@@ -36,6 +36,11 @@ describe("formatCurrency", () => {
     const formatted = formatCurrency(100000);
     expect(formatted).toContain("1,00,000");
   });
+
+  it("falls back to en-IN locale for unknown currency", () => {
+    const formatted = formatCurrency(100000, "JPY" as unknown as "INR");
+    expect(formatted).toContain("1,00,000");
+  });
 });
 
 describe("ClientIntakeSchema currency validation", () => {
