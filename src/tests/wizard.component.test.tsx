@@ -175,6 +175,35 @@ describe("EventWizard Component", () => {
     expect(alert).toHaveTextContent(/Failed to generate plan/i);
   });
 
+  it("displays friendly error when server response fails schema validation", async () => {
+    const user = userEvent.setup();
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: new Headers(),
+      json: async () => ({
+        // Incomplete / corrupt response missing required fields
+        eventName: "Only Name",
+      }),
+    });
+
+    render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
+    await user.click(screen.getByLabelText(/wedding/i));
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/event date/i), "2027-08-20");
+    await user.type(screen.getByLabelText(/event location/i), "Goa Beach Resort");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/total budget/i), "750000");
+    await user.type(screen.getByLabelText(/guest count/i), "120");
+    await user.click(screen.getByRole("button", { name: /^next$/i }));
+    await user.type(screen.getByLabelText(/theme preferences/i), "Sunset coastal boho");
+    await user.click(screen.getByRole("button", { name: /generate plan/i }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent(/Received an unexpected plan format/i);
+    expect(mockOnPlanGenerated).not.toHaveBeenCalled();
+  });
+
   it("has zero accessibility violations on initial render according to axe", async () => {
     const { container } = render(<EventWizard onPlanGenerated={mockOnPlanGenerated} />);
     const results = await axe(container);

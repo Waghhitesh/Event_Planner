@@ -14,7 +14,7 @@
 
 import { useState, useEffect, useRef, useId, useCallback } from "react";
 import type { ClientIntake, GeminiResponse } from "@/lib/schemas";
-import { ClientIntakeSchema } from "@/lib/schemas";
+import { ClientIntakeSchema, GeminiResponseSchema } from "@/lib/schemas";
 import { AlertTriangle } from "lucide-react";
 import { STEPS, FIELD_ID_MAP, STEP_SCHEMAS } from "./wizard/constants";
 import { WizardProgress } from "./wizard/WizardProgress";
@@ -154,7 +154,12 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
         throw new Error("Failed to generate plan. Please try again later.");
       }
 
-      onPlanGenerated(json as GeminiResponse, intake);
+      const planParse = GeminiResponseSchema.safeParse(json);
+      if (!planParse.success) {
+        throw new Error("Received an unexpected plan format. Please try again.");
+      }
+
+      onPlanGenerated(planParse.data, intake);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
         setApiError("The AI took too long, please try again");
