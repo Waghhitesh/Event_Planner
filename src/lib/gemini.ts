@@ -1,7 +1,12 @@
 /**
  * @file gemini.ts
- * @description Gemini 1.5 Flash client configuration and structured-response
- * schema definition for EventPulse AI.
+ * @description Gemini client configuration and structured-response schema
+ * definition for EventPulse AI.
+ *
+ * Client initialisation is LAZY — the GoogleGenerativeAI instance is only
+ * created on first use, so importing this module at the top of a route file
+ * does NOT throw if GEMINI_API_KEY is missing (the route handler returns 503
+ * with a clear message instead).
  */
 
 import {
@@ -10,21 +15,29 @@ import {
   type GenerationConfig,
   type Schema,
 } from "@google/generative-ai";
+import { DEFAULT_GEMINI_MODEL } from "./config";
+import { SYSTEM_INSTRUCTION } from "./prompt";
 
 // ---------------------------------------------------------------------------
-// Client initialisation
+// Lazy client singleton
 // ---------------------------------------------------------------------------
 
-const apiKey = process.env.GEMINI_API_KEY;
+let _genAI: GoogleGenerativeAI | null = null;
 
-if (!apiKey) {
-  throw new Error(
-    "GEMINI_API_KEY environment variable is not set. " +
-      "Add it to your .env.local file."
-  );
+/**
+ * Returns the shared GoogleGenerativeAI instance, initialising it on first
+ * call. Throws a descriptive error if GEMINI_API_KEY is not set so the
+ * route handler can convert it to a 503 response.
+ */
+export function getGenAI(): GoogleGenerativeAI {
+  if (_genAI) return _genAI;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY environment variable is not set.");
+  }
+  _genAI = new GoogleGenerativeAI(apiKey);
+  return _genAI;
 }
-
-export const genAI = new GoogleGenerativeAI(apiKey);
 
 // ---------------------------------------------------------------------------
 // Structured JSON response schema (mirrors GeminiResponseSchema in schemas.ts)
@@ -114,8 +127,7 @@ export const responseSchema: Schema = {
           },
           vettingQuestions: {
             type: SchemaType.ARRAY,
-            description:
-              "Questions to ask vendors before booking to ensure quality",
+            description: "Questions to ask vendors before booking to ensure quality",
             items: { type: SchemaType.STRING },
           },
           status: {
@@ -177,13 +189,15 @@ export const generationConfig: GenerationConfig = {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a configured Gemini 1.5 Flash model instance.
- * Call this per-request to stay stateless and avoid shared mutable state.
+ * Returns a configured Gemini model instance with the system instruction
+ * pre-loaded. Uses the GEMINI_MODEL env var or DEFAULT_GEMINI_MODEL.
+ * Calls getGenAI() which will throw if the API key is missing.
  */
 export function getGeminiModel() {
-  const modelName = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  return genAI.getGenerativeModel({
+  const modelName = process.env.GEMINI_MODEL ?? DEFAULT_GEMINI_MODEL;
+  return getGenAI().getGenerativeModel({
     model: modelName,
     generationConfig,
+    systemInstruction: SYSTEM_INSTRUCTION,
   });
 }
