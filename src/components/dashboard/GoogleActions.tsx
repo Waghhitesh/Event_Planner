@@ -10,6 +10,7 @@ import { Calendar, Download, ExternalLink, Printer } from "lucide-react";
 import {
   generateGoogleCalendarUrl,
   generateGoogleSheetsCsv,
+  generateIcs,
   slugifyFilename,
 } from "@/lib/google-integrations";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
@@ -55,6 +56,19 @@ const GoogleActions = memo(function GoogleActions({
     URL.revokeObjectURL(url);
   }, [plan, currency]);
 
+  const handleExportIcs = useCallback(() => {
+    const ics = generateIcs(plan, eventDate);
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${slugifyFilename(plan.eventName)}_Timeline.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [plan, eventDate]);
+
   const handlePrint = useCallback(() => {
     window.print();
   }, []);
@@ -67,6 +81,12 @@ const GoogleActions = memo(function GoogleActions({
         Sync with Google Calendar <span className="sr-only">(opens in new tab)</span>
         <ExternalLink className="h-3 w-3 opacity-60" aria-hidden="true" />
       </LinkButton>
+
+      {/* Add timeline to calendar (.ics) */}
+      <Button variant="secondary" onClick={handleExportIcs}>
+        <Calendar className="h-4 w-4" aria-hidden="true" />
+        Add timeline to calendar (.ics)
+      </Button>
 
       {/* Google Sheets CSV */}
       <Button variant="secondary" onClick={handleExportCsv}>

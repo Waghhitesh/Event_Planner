@@ -7,6 +7,7 @@ import { describe, it, expect } from "vitest";
 import {
   generateGoogleCalendarUrl,
   generateGoogleSheetsCsv,
+  generateIcs,
   slugifyFilename,
 } from "../lib/google-integrations";
 import { MOCK_PLAN } from "./fixtures";
@@ -219,5 +220,59 @@ describe("slugifyFilename", () => {
     const slug = slugifyFilename(name);
     // No filesystem-dangerous characters
     expect(slug).not.toMatch(/[/\\:*?"<>|]/);
+  });
+});
+
+describe("generateIcs", () => {
+  const eventDate = "2027-06-15";
+  const ics = generateIcs(MOCK_PLAN, eventDate);
+
+  it("produces valid RFC 5545 calendar container with CRLF line endings", () => {
+    expect(ics.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
+    expect(ics.endsWith("END:VCALENDAR")).toBe(true);
+    expect(ics).toContain("VERSION:2.0\r\n");
+    expect(ics).toContain("PRODID:-//EventPulse AI//Event Planning Assistant//EN\r\n");
+  });
+
+  it("creates a VEVENT for each timeline phase", () => {
+    const veventMatches = ics.match(/BEGIN:VEVENT/g);
+    expect(veventMatches?.length).toBe(MOCK_PLAN.timeline.length);
+  });
+
+  it("calculates phase dates relative to the event date", () => {
+    // Phase 0: 180 days before 2027-06-15 -> 2026-12-17
+    // Let's verify DTSTART is formatted as YYYYMMDD
+    expect(ics).toMatch(/DTSTART;VALUE=DATE:\d{8}/);
+    expect(ics).toMatch(/DTEND;VALUE=DATE:\d{8}/);
+  });
+
+  it("includes UID and DTSTAMP in each event", () => {
+    expect(ics).toContain("UID:");
+    expect(ics).toContain("@eventpulse.ai");
+    expect(ics).toContain("DTSTAMP:");
+  });
+
+  it("includes tasks in DESCRIPTION with RFC 5545 character escaping", () => {
+    expect(ics).toContain("DESCRIPTION:");
+    // Tasks should be listed in description
+    for (const task of MOCK_PLAN.timeline[0]!.tasks) {
+      expect(ics).toContain(task);
+    }
+  });
+
+  it("escapes semicolons, commas, and newlines in text properties", () => {
+    const planWithSpecialChars = {
+      ...MOCK_PLAN,
+      timeline: [
+        {
+          phase: "Venue, Catering; Planning",
+          daysBeforeEvent: 10,
+          tasks: ["Book venue, sign contract; pay deposit\nCheck license"],
+        },
+      ],
+    };
+    const specialIcs = generateIcs(planWithSpecialChars, eventDate);
+    expect(specialIcs).toContain("Venue\\, Catering\\; Planning");
+    expect(specialIcs).toContain("Book venue\\, sign contract\\; pay deposit\\nCheck license");
   });
 });

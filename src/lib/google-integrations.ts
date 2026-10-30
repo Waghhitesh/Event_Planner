@@ -187,3 +187,74 @@ export function slugifyFilename(name: string): string {
     .replace(/^_|_$/g, "")
     .slice(0, 80);
 }
+
+// ---------------------------------------------------------------------------
+// RFC 5545 iCalendar (.ics) export
+// ---------------------------------------------------------------------------
+
+/**
+ * Escapes characters with special meaning in iCalendar (RFC 5545).
+ * Characters: backslash, semicolon, comma, and newlines.
+ */
+function escapeIcsText(str: string): string {
+  return str
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
+/**
+ * Generates an RFC 5545-compliant iCalendar (.ics) string containing all-day
+ * events for every timeline phase, scheduled relative to the event date.
+ *
+ * @param planData  - Validated Gemini response object.
+ * @param eventDate - ISO 8601 date string (YYYY-MM-DD).
+ * @returns RFC 5545 formatted .ics calendar content with CRLF line endings.
+ */
+export function generateIcs(planData: GeminiResponse, eventDate: string): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const formatIcsDate = (d: Date) =>
+    `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}`;
+
+  const baseDate = new Date(eventDate);
+  const now = new Date();
+  const dtstamp = `${now.getUTCFullYear()}${pad(now.getUTCMonth() + 1)}${pad(now.getUTCDate())}T${pad(now.getUTCHours())}${pad(now.getUTCMinutes())}${pad(now.getUTCSeconds())}Z`;
+
+  const lines: string[] = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//EventPulse AI//Event Planning Assistant//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+  ];
+
+  planData.timeline.forEach((phase, index) => {
+    const phaseDate = new Date(baseDate);
+    phaseDate.setUTCDate(phaseDate.getUTCDate() - phase.daysBeforeEvent);
+
+    const startDateStr = formatIcsDate(phaseDate);
+    const nextDay = new Date(phaseDate);
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+    const endDateStr = formatIcsDate(nextDay);
+
+    const uid = `${slugifyFilename(planData.eventName)}-phase-${index}-${startDateStr}@eventpulse.ai`;
+    const summary = `${planData.eventName}: ${phase.phase}`;
+    const description = phase.tasks.map((t) => `- ${t}`).join("\n");
+
+    lines.push("BEGIN:VEVENT");
+    lines.push(`UID:${uid}`);
+    lines.push(`DTSTAMP:${dtstamp}`);
+    lines.push(`DTSTART;VALUE=DATE:${startDateStr}`);
+    lines.push(`DTEND;VALUE=DATE:${endDateStr}`);
+    lines.push(`SUMMARY:${escapeIcsText(summary)}`);
+    lines.push(`DESCRIPTION:${escapeIcsText(description)}`);
+    lines.push("STATUS:CONFIRMED");
+    lines.push("TRANSP:TRANSPARENT");
+    lines.push("END:VEVENT");
+  });
+
+  lines.push("END:VCALENDAR");
+
+  return lines.join("\r\n");
+}

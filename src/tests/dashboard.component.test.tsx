@@ -140,6 +140,9 @@ describe("DashboardView Component", () => {
     const exportBtn = screen.getByRole("button", { name: /export to google sheets/i });
     await user.click(exportBtn);
 
+    const icsBtn = screen.getByRole("button", { name: /add timeline to calendar \(\.ics\)/i });
+    await user.click(icsBtn);
+
     const printBtn = screen.getByRole("button", { name: /print \/ save as pdf/i });
     await user.click(printBtn);
     expect(window.print).toHaveBeenCalled();
