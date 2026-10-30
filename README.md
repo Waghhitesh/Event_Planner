@@ -28,7 +28,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 | UI | TailwindCSS v4, Lucide React |
 | AI | Google Gemini Flash (`@google/generative-ai`) |
 | Validation | Zod v4 |
-| Testing | Vitest v5 (131 tests, jsdom + node, >90% coverage) |
+| Testing | Vitest v5 (180 tests, jsdom + node, >97% line coverage, 86% branch) |
 | CI/CD | GitHub Actions (6 jobs: secret scan, install, lint, typecheck, audit, test, build) |
 
 ---
@@ -230,15 +230,21 @@ tests/
 | security | 22 | sanitizeInput, xmlWrap, Unicode evasion, false-positive regression |
 | google-integrations | 27 | Calendar URL, CSV export, formula injection, filename slug |
 | route | 18 | Happy path, 400/413/429/502/504, cache, rate limit, timeout, abort, body |
+| generate-plan | 17 | 2-attempt orchestration, quota detection, timeout, invariant repair |
 | schemas | 14 | Zod intake + response validation, SDK/Zod key parity |
 | plan-validation | 13 | Invariant checks, normalisation, budget arithmetic |
-| prompt | 12 | System instruction, XML sandbox, corrective prompt |
-| format | 8 | Multi-currency formatting (INR, USD, EUR, GBP) |
-| dashboard.component | 7 | Keyboard navigation, state persistence, h1 focus, axe accessibility |
-| wizard.component | 6 | Step validation, focus management, payload submission, 429/504/non-JSON, axe |
+| prompt | 13 | System instruction, XML sandbox, corrective prompt, default currency |
+| wizard.component | 13 | Step validation, focus management, payload submission, error handling, axe |
+| dashboard.component | 9 | Keyboard navigation, state persistence, h1 focus, axe accessibility |
+| format | 9 | Multi-currency formatting (INR, USD, EUR, GBP), locale fallback |
+| plan-cache | 6 | In-memory LRU/TTL cache, eviction, key hashing |
+| ui-primitives | 5 | Button, Card, Badge rendering and variant styling |
+| rate-limit | 4 | Sliding window limiter, automatic entry pruning |
+| http | 3 | Error response formatting and Retry-After headers |
+| use-wizard-form | 3 | Form state management, field updates, error handling |
 | gemini | 2 | Lazy factory initialisation and model config |
 | planner-app.component | 2 | App view orchestration, wizard→dashboard→Start Over |
-| **Total** | **131** | **>92% line coverage across codebase** |
+| **Total** | **180** | **97.31% lines, 86.46% branch, 96.18% functions** |
 
 ---
 
