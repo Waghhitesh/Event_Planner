@@ -42,6 +42,27 @@ export function isFutureDate(dateStr: string): boolean {
 }
 
 /**
+ * Validates that a string is a real calendar date in YYYY-MM-DD format.
+ * Guards against non-existent dates like February 31 or month 13 via round-trip format.
+ */
+export function isRealDate(str: string): boolean {
+  if (!DATE_PATTERN.test(str)) return false;
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return false;
+  return formatDateOnly(d) === str;
+}
+
+/**
+ * Returns true if the date is within max horizon (defaults to 5 years from today UTC).
+ */
+export function isWithinMaxHorizon(str: string, maxYears = 5): boolean {
+  if (!isRealDate(str)) return false;
+  const maxDate = new Date();
+  maxDate.setUTCFullYear(maxDate.getUTCFullYear() + maxYears);
+  return str <= formatDateOnly(maxDate);
+}
+
+/**
  * Formats a Date object or YYYY-MM-DD string into a human-readable date string
  * using the `en-IN` locale with `timeZone: "UTC"` to avoid off-by-one issues.
  *

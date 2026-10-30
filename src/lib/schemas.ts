@@ -6,7 +6,7 @@
 
 import { z } from "zod";
 import { LIMITS } from "./config";
-import { isFutureDate, DATE_PATTERN } from "./date";
+import { isFutureDate, isRealDate, isWithinMaxHorizon, DATE_PATTERN } from "./date";
 
 // ---------------------------------------------------------------------------
 // Shared primitives
@@ -33,7 +33,11 @@ export const ClientIntakeSchema = z.object({
     .string()
     .min(1, "Event date is required")
     .regex(DATE_PATTERN, "Date must be in YYYY-MM-DD format")
-    .refine(isFutureDate, { message: "Event date must be in the future" }),
+    .refine(isRealDate, { message: "Event date must be a valid calendar date" })
+    .refine(isFutureDate, { message: "Event date must be in the future" })
+    .refine((d) => isWithinMaxHorizon(d), {
+      message: "Event date must be within 5 years",
+    }),
   location: nonEmptyString(LIMITS.LOCATION_MAX),
   currency: CurrencySchema,
   totalBudget: z

@@ -38,6 +38,24 @@ describe("ClientIntakeSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("rejects impossible calendar dates", () => {
+    expect(ClientIntakeSchema.safeParse({ ...VALID_INTAKE, eventDate: "2027-02-31" }).success).toBe(
+      false
+    );
+    expect(ClientIntakeSchema.safeParse({ ...VALID_INTAKE, eventDate: "2027-13-45" }).success).toBe(
+      false
+    );
+    expect(ClientIntakeSchema.safeParse({ ...VALID_INTAKE, eventDate: "2027-00-10" }).success).toBe(
+      false
+    );
+  });
+
+  it("rejects far-future dates beyond the 5-year maximum horizon", () => {
+    const farFuture = "2045-01-01";
+    const result = ClientIntakeSchema.safeParse({ ...VALID_INTAKE, eventDate: farFuture });
+    expect(result.success).toBe(false);
+  });
+
   it("rejects zero totalBudget", () => {
     const result = ClientIntakeSchema.safeParse({ ...VALID_INTAKE, totalBudget: 0 });
     expect(result.success).toBe(false);
