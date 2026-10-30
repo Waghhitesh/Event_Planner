@@ -9,8 +9,7 @@
  * Architecture:
  *  - One component per step (Step0EventType, Step1Details, Step2Budget, Step3Preferences)
  *  - Shared primitives in ./wizard/primitives
- *  - Step validation uses ClientIntakeSchema.pick().safeParse ?" no duplicated rules
- *  - Under 250 lines
+ *  - Step validation uses ClientIntakeSchema.pick().safeParse — no duplicated rules
  */
 
 import { useState, useEffect, useRef, useId, useCallback } from "react";
@@ -25,9 +24,6 @@ import { Step2Budget } from "./wizard/Step2Budget";
 import { Step3Preferences } from "./wizard/Step3Preferences";
 import type { FieldErrors, StepProps } from "./wizard/types";
 
-export * from "./wizard/primitives";
-export * from "./wizard/types";
-
 interface EventWizardProps {
   onPlanGenerated: (plan: GeminiResponse, intake: ClientIntake) => void;
 }
@@ -35,7 +31,6 @@ interface EventWizardProps {
 export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
   const formId = useId();
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
-  const firstErrorRef = useRef<HTMLElement | null>(null);
   const fieldRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const registerRef = useCallback((field: string, el: HTMLElement | null) => {
@@ -109,13 +104,11 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     if (firstField) {
       const refEl = fieldRefs.current[firstField];
       if (refEl) {
-        firstErrorRef.current = refEl;
         refEl.focus();
       } else {
         const suffix = FIELD_ID_MAP[firstField] ?? firstField;
         const fallback = document.getElementById(`${formId}-${suffix}`);
         if (fallback) {
-          firstErrorRef.current = fallback;
           fallback.focus();
         }
       }
