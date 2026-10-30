@@ -31,6 +31,12 @@ describe("DashboardView Component", () => {
     expect(heading).toHaveTextContent(MOCK_PLAN.eventName);
   });
 
+  it("focuses the h1 heading on mount", () => {
+    render(<DashboardView {...defaultProps} />);
+    const heading = screen.getByRole("heading", { level: 1 });
+    expect(document.activeElement).toBe(heading);
+  });
+
   it("supports keyboard arrow/Home/End navigation between tabs", async () => {
     const user = userEvent.setup();
     render(<DashboardView {...defaultProps} />);

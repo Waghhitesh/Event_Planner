@@ -3,18 +3,16 @@
  * @description Unit tests for lazy Gemini client factory.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getGenAI, getGeminiModel } from "../lib/gemini";
 
 describe("gemini.ts lazy factory", () => {
-  const originalKey = process.env.GEMINI_API_KEY;
-
   beforeEach(() => {
-    process.env.GEMINI_API_KEY = "test-api-key";
+    vi.stubEnv("GEMINI_API_KEY", "test-api-key");
   });
 
   afterEach(() => {
-    process.env.GEMINI_API_KEY = originalKey;
+    vi.unstubAllEnvs();
   });
 
   it("returns a GoogleGenerativeAI instance", () => {

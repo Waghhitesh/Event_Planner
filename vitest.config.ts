@@ -15,6 +15,8 @@ export default defineConfig({
       thresholds: {
         lines: 85,
         functions: 85,
+        "src/app/api/**": { lines: 85 },
+        "src/components/**": { lines: 85 },
       },
     },
   },
