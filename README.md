@@ -28,7 +28,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 | UI | TailwindCSS v4, Lucide React |
 | AI | Google Gemini Flash (`@google/generative-ai`) |
 | Validation | Zod v4 |
-| Testing | Vitest v5 (124 tests, jsdom + node, >90% coverage) |
+| Testing | Vitest v5 (131 tests, jsdom + node, >90% coverage) |
 | CI/CD | GitHub Actions (6 jobs: secret scan, install, lint, typecheck, audit, test, build) |
 
 ---
@@ -108,7 +108,7 @@ Plans can be exported directly to **Google Calendar** (deep link, zero OAuth) an
 ## Design Decisions
 
 - **Lazy Gemini init** — `getGenAI()` only runs on first API call. Routes return `503` with a clear message if the key is missing, instead of crashing at import time.
-- **In-memory cache** — LRU+TTL (100 entries, 10 min) keyed by SHA-256 of the normalised intake. Identical plans are served without hitting the Gemini quota.
+- **In-memory cache** — LRU+TTL (100 entries, 10 min) keyed by SHA-256 of the normalised intake. Identical plans are served without hitting the Gemini quota. **Note: the rate limiter and plan cache are in-memory and per server instance; on serverless platforms like Vercel each function invocation may have a separate store, so cache hits and rate limit enforcement are best-effort across concurrent invocations.**
 - **Plan normalisation** — If Gemini returns arithmetic-inconsistent budgets after one retry, `normalisePlan()` scales items deterministically rather than returning an error to the user.
 - **Tab state preservation** — All dashboard tab panels are rendered with `hidden` (not conditionally mounted). Timeline checkboxes and vendor expand state survive tab switches. Checked tasks are persisted in `localStorage`.
 - **Server Component page** — `app/page.tsx` is a React Server Component; only `PlannerApp` is a Client Component, minimising the client bundle.
@@ -229,16 +229,16 @@ tests/
 |---|---|---|
 | security | 22 | sanitizeInput, xmlWrap, Unicode evasion, false-positive regression |
 | google-integrations | 27 | Calendar URL, CSV export, formula injection, filename slug |
-| route | 16 | Happy path, 400/413/429/502/504, cache, rate limit, timeout |
+| route | 18 | Happy path, 400/413/429/502/504, cache, rate limit, timeout, abort, body |
 | schemas | 14 | Zod intake + response validation, SDK/Zod key parity |
 | plan-validation | 13 | Invariant checks, normalisation, budget arithmetic |
 | prompt | 12 | System instruction, XML sandbox, corrective prompt |
 | format | 8 | Multi-currency formatting (INR, USD, EUR, GBP) |
-| dashboard.component | 6 | Keyboard navigation, state persistence, axe accessibility |
-| wizard.component | 3 | Step validation, focus management, payload submission, axe |
+| dashboard.component | 7 | Keyboard navigation, state persistence, h1 focus, axe accessibility |
+| wizard.component | 6 | Step validation, focus management, payload submission, 429/504/non-JSON, axe |
 | gemini | 2 | Lazy factory initialisation and model config |
-| planner-app.component | 1 | App view orchestration |
-| **Total** | **124** | **>92% line coverage across codebase** |
+| planner-app.component | 2 | App view orchestration, wizard→dashboard→Start Over |
+| **Total** | **131** | **>92% line coverage across codebase** |
 
 ---
 
