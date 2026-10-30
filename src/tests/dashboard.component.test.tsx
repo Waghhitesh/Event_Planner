@@ -50,6 +50,16 @@ describe("DashboardView Component", () => {
     expect(ideasTab).toHaveAccessibleName(/ideas/i);
   });
 
+  it("renders print-only headings for all tab panels", () => {
+    const { container } = render(<DashboardView {...defaultProps} />);
+    const printHeadings = container.querySelectorAll(".print-only-heading");
+    expect(printHeadings.length).toBe(4);
+    expect(printHeadings[0]?.textContent).toContain("Budget");
+    expect(printHeadings[1]?.textContent).toContain("Timeline");
+    expect(printHeadings[2]?.textContent).toContain("Vendors");
+    expect(printHeadings[3]?.textContent).toContain("Ideas");
+  });
+
   it("supports keyboard arrow/Home/End navigation between tabs", async () => {
     const user = userEvent.setup();
     render(<DashboardView {...defaultProps} />);

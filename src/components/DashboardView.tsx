@@ -167,7 +167,7 @@ export default function DashboardView({
         </div>
 
         {/* Tab panels — all mounted, visibility via hidden attribute */}
-        <div className="p-5 sm:p-6">
+        <div className="p-5 sm:p-6 print:p-0">
           {TABS.map((tab) => (
             <div
               key={tab.id}
@@ -175,7 +175,11 @@ export default function DashboardView({
               role="tabpanel"
               aria-labelledby={`tab-${tab.id}`}
               hidden={activeTab !== tab.id}
+              className="print:mb-8"
             >
+              <h2 className="print-only-heading text-lg font-bold border-b border-gray-300 pb-1 mb-4 text-gray-900">
+                {tab.label}
+              </h2>
               {tab.id === "budget" && <BudgetTab plan={plan} currency={currency} />}
               {tab.id === "timeline" && <TimelineTab plan={plan} />}
               {tab.id === "vendors" && <VendorsTab plan={plan} currency={currency} />}
