@@ -9,6 +9,7 @@ import {
   callGemini,
   parseAndValidateResponse,
   isQuotaOrRateLimitError,
+  classifyFailure,
 } from "../lib/generate-plan";
 import { MOCK_PLAN, VALID_INTAKE } from "./fixtures";
 
@@ -41,6 +42,23 @@ describe("generate-plan module", () => {
       expect(isQuotaOrRateLimitError(new Error("Too Many Requests"))).toBe(true);
       expect(isQuotaOrRateLimitError(new Error("Generic network error"))).toBe(false);
       expect(isQuotaOrRateLimitError(null)).toBe(false);
+    });
+  });
+
+  describe("classifyFailure", () => {
+    it("returns 'timeout' if signal is aborted", () => {
+      const controller = new AbortController();
+      controller.abort();
+      expect(classifyFailure(new Error("Whatever"), controller.signal)).toBe("timeout");
+    });
+
+    it("returns 'quota' on quota or rate-limit errors", () => {
+      expect(classifyFailure(new Error("RESOURCE_EXHAUSTED"))).toBe("quota");
+      expect(classifyFailure({ status: 429 })).toBe("quota");
+    });
+
+    it("returns 'upstream' for general errors", () => {
+      expect(classifyFailure(new Error("Connection reset"))).toBe("upstream");
     });
   });
 

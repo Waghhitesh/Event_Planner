@@ -24,6 +24,19 @@ export function isQuotaOrRateLimitError(err: unknown): boolean {
   return /429|quota|RESOURCE_EXHAUSTED|Too Many Requests/i.test(msg);
 }
 
+export function classifyFailure(
+  err: unknown,
+  signal?: AbortSignal
+): "timeout" | "quota" | "upstream" {
+  if (signal?.aborted) {
+    return "timeout";
+  }
+  if (isQuotaOrRateLimitError(err)) {
+    return "quota";
+  }
+  return "upstream";
+}
+
 export async function callGemini(prompt: string, signal?: AbortSignal): Promise<string> {
   const model = getGeminiModel();
   const result = await model.generateContent(
@@ -95,11 +108,9 @@ export async function generatePlan(
     const rawResponse = await callGemini(buildUserPrompt(intake), signal);
     plan = parseAndValidateResponse(rawResponse);
   } catch (err) {
-    if (signal?.aborted) {
-      return { ok: false, kind: "timeout" };
-    }
-    if (isQuotaOrRateLimitError(err)) {
-      return { ok: false, kind: "quota" };
+    const failureKind = classifyFailure(err, signal);
+    if (failureKind !== "upstream") {
+      return { ok: false, kind: failureKind };
     }
     initialError = err instanceof Error ? err.message : String(err);
     console.warn("[EventPulse] First Gemini call failed:", initialError);
@@ -111,11 +122,9 @@ export async function generatePlan(
       const retryText = await callGemini(buildCorrectivePrompt(intake, [initialError]), signal);
       plan = parseAndValidateResponse(retryText);
     } catch (retryErr) {
-      if (signal?.aborted) {
-        return { ok: false, kind: "timeout" };
-      }
-      if (isQuotaOrRateLimitError(retryErr)) {
-        return { ok: false, kind: "quota" };
+      const failureKind = classifyFailure(retryErr, signal);
+      if (failureKind !== "upstream") {
+        return { ok: false, kind: failureKind };
       }
       const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
       console.error("[EventPulse] Retry also failed:", retryMsg);

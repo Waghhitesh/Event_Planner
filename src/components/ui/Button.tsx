@@ -27,6 +27,7 @@ const SIZE_STYLES: Record<ButtonSize, string> = {
 };
 
 export function Button({
+  type = "button",
   variant = "primary",
   size = "md",
   className = "",
@@ -36,7 +37,7 @@ export function Button({
   const classes =
     `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`.trim();
   return (
-    <button className={classes} {...props}>
+    <button type={type} className={classes} {...props}>
       {children}
     </button>
   );
