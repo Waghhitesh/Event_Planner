@@ -74,7 +74,8 @@ export default function DashboardView({
   const [activeTab, setActiveTab] = useState<TabId>("budget");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const internalHeadingRef = useRef<HTMLHeadingElement>(null);
-  const resolvedHeadingRef = (headingRef as RefObject<HTMLHeadingElement | null>) ?? internalHeadingRef;
+  const resolvedHeadingRef =
+    (headingRef as RefObject<HTMLHeadingElement | null>) ?? internalHeadingRef;
 
   useEffect(() => {
     resolvedHeadingRef.current?.focus();

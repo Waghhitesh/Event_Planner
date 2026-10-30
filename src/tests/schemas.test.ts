@@ -114,7 +114,10 @@ describe("GeminiResponseSchema", () => {
   it("has identical property keys and required fields as gemini.ts responseSchema", async () => {
     const { responseSchema } = await import("../lib/gemini");
     const zodKeys = Object.keys(GeminiResponseSchema.shape).sort();
-    const sdkSchema = responseSchema as { properties?: Record<string, unknown>; required?: string[] };
+    const sdkSchema = responseSchema as {
+      properties?: Record<string, unknown>;
+      required?: string[];
+    };
     const sdkKeys = Object.keys(sdkSchema.properties ?? {}).sort();
     expect(sdkKeys).toEqual(zodKeys);
 

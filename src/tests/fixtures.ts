@@ -21,20 +21,74 @@ export const MOCK_PLAN: GeminiResponse = {
   themeSummary: "An intimate bohemian wedding with fairy lights and blush tones.",
   totalEstimatedCost: 500000,
   budgetBreakdown: [
-    { category: "Catering", allocatedAmount: 150000, priority: "critical", costSavingTip: "Opt for a set menu" },
-    { category: "Venue", allocatedAmount: 100000, priority: "critical", costSavingTip: "Book off-peak" },
-    { category: "Photography", allocatedAmount: 80000, priority: "high", costSavingTip: "Package deals save" },
-    { category: "Décor", allocatedAmount: 70000, priority: "high", costSavingTip: "DIY centrepieces" },
-    { category: "Music & Entertainment", allocatedAmount: 60000, priority: "medium", costSavingTip: "Local artists" },
-    { category: "Miscellaneous", allocatedAmount: 40000, priority: "low", costSavingTip: "Buffer for overruns" },
+    {
+      category: "Catering",
+      allocatedAmount: 150000,
+      priority: "critical",
+      costSavingTip: "Opt for a set menu",
+    },
+    {
+      category: "Venue",
+      allocatedAmount: 100000,
+      priority: "critical",
+      costSavingTip: "Book off-peak",
+    },
+    {
+      category: "Photography",
+      allocatedAmount: 80000,
+      priority: "high",
+      costSavingTip: "Package deals save",
+    },
+    {
+      category: "Décor",
+      allocatedAmount: 70000,
+      priority: "high",
+      costSavingTip: "DIY centrepieces",
+    },
+    {
+      category: "Music & Entertainment",
+      allocatedAmount: 60000,
+      priority: "medium",
+      costSavingTip: "Local artists",
+    },
+    {
+      category: "Miscellaneous",
+      allocatedAmount: 40000,
+      priority: "low",
+      costSavingTip: "Buffer for overruns",
+    },
   ],
   timeline: [
-    { phase: "Initial Planning", daysBeforeEvent: 180, tasks: ["Set vision board", "Book venue", "Engage caterer"] },
-    { phase: "Vendor Finalisation", daysBeforeEvent: 120, tasks: ["Confirm photographer", "Sign caterer contract"] },
-    { phase: "Invitations", daysBeforeEvent: 90, tasks: ["Send save-the-dates", "Finalise guest list"] },
-    { phase: "Décor & Logistics", daysBeforeEvent: 60, tasks: ["Order décor items", "Arrange transport"] },
-    { phase: "Final Preparations", daysBeforeEvent: 14, tasks: ["Confirm all vendors", "Rehearsal dinner"] },
-    { phase: "Event Day", daysBeforeEvent: 0, tasks: ["Final vendor check", "Enjoy the celebration"] },
+    {
+      phase: "Initial Planning",
+      daysBeforeEvent: 180,
+      tasks: ["Set vision board", "Book venue", "Engage caterer"],
+    },
+    {
+      phase: "Vendor Finalisation",
+      daysBeforeEvent: 120,
+      tasks: ["Confirm photographer", "Sign caterer contract"],
+    },
+    {
+      phase: "Invitations",
+      daysBeforeEvent: 90,
+      tasks: ["Send save-the-dates", "Finalise guest list"],
+    },
+    {
+      phase: "Décor & Logistics",
+      daysBeforeEvent: 60,
+      tasks: ["Order décor items", "Arrange transport"],
+    },
+    {
+      phase: "Final Preparations",
+      daysBeforeEvent: 14,
+      tasks: ["Confirm all vendors", "Rehearsal dinner"],
+    },
+    {
+      phase: "Event Day",
+      daysBeforeEvent: 0,
+      tasks: ["Final vendor check", "Enjoy the celebration"],
+    },
   ],
   vendorChecklist: [
     {
@@ -100,11 +154,13 @@ export const MOCK_PLAN: GeminiResponse = {
     },
     {
       idea: "Personalised Seed Packets",
-      implementationDetails: "Send guests home with wildflower seed packets labelled with the couple's names.",
+      implementationDetails:
+        "Send guests home with wildflower seed packets labelled with the couple's names.",
     },
     {
       idea: "Photo Polaroid Wall",
-      implementationDetails: "Hang a rope grid where guests pin Polaroid shots taken during the reception.",
+      implementationDetails:
+        "Hang a rope grid where guests pin Polaroid shots taken during the reception.",
     },
     {
       idea: "Live Calligraphy Station",

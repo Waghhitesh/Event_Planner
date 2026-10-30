@@ -50,7 +50,10 @@ describe("PlannerApp Component", () => {
     await user.click(screen.getByRole("button", { name: /generate plan/i }));
 
     // Dashboard should now be visible
-    const dashboardHeading = await screen.findByRole("heading", { level: 1, name: MOCK_PLAN.eventName });
+    const dashboardHeading = await screen.findByRole("heading", {
+      level: 1,
+      name: MOCK_PLAN.eventName,
+    });
     expect(dashboardHeading).toBeInTheDocument();
 
     // Click "Start Over" button

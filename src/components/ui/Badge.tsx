@@ -18,12 +18,7 @@ const VARIANT_STYLES: Record<BadgeVariant, string> = {
   blue: "bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300",
 };
 
-export function Badge({
-  variant = "default",
-  className = "",
-  children,
-  ...props
-}: BadgeProps) {
+export function Badge({ variant = "default", className = "", children, ...props }: BadgeProps) {
   const classes = `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${className}`.trim();
   return (
     <span className={classes} {...props}>

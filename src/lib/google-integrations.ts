@@ -106,13 +106,18 @@ function csvRow(cells: (string | number)[]): string {
  * @param planData - Validated Gemini response object.
  * @returns A string of RFC 4180 CSV content (CRLF line endings, UTF-8).
  */
-export function generateGoogleSheetsCsv(planData: GeminiResponse, currency: Currency = "INR"): string {
+export function generateGoogleSheetsCsv(
+  planData: GeminiResponse,
+  currency: Currency = "INR"
+): string {
   const lines: string[] = [];
 
   lines.push(csvRow(["EventPulse AI — Event Plan Export"]));
   lines.push(csvRow(["Event Name", planData.eventName]));
   lines.push(csvRow(["Theme Summary", planData.themeSummary]));
-  lines.push(csvRow(["Total Estimated Cost", formatCurrency(planData.totalEstimatedCost, currency)]));
+  lines.push(
+    csvRow(["Total Estimated Cost", formatCurrency(planData.totalEstimatedCost, currency)])
+  );
   lines.push("");
 
   // ── Budget Breakdown ────────────────────────────────────────────────────
@@ -121,7 +126,14 @@ export function generateGoogleSheetsCsv(planData: GeminiResponse, currency: Curr
 
   let budgetTotal = 0;
   for (const item of planData.budgetBreakdown) {
-    lines.push(csvRow([item.category, formatCurrency(item.allocatedAmount, currency), item.priority, item.costSavingTip]));
+    lines.push(
+      csvRow([
+        item.category,
+        formatCurrency(item.allocatedAmount, currency),
+        item.priority,
+        item.costSavingTip,
+      ])
+    );
     budgetTotal += item.allocatedAmount;
   }
   lines.push(csvRow(["TOTAL", formatCurrency(budgetTotal, currency), "", ""]));

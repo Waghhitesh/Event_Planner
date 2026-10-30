@@ -85,7 +85,7 @@ describe("POST /api/plan", () => {
     });
     const res = await POST(req as never);
     expect(res.status).toBe(400);
-    const json = await res.json() as { error: string };
+    const json = (await res.json()) as { error: string };
     expect(json.error).toContain("Invalid JSON");
   });
 
@@ -95,7 +95,7 @@ describe("POST /api/plan", () => {
     const req = makeRequest(body);
     const res = await POST(req as never);
     expect(res.status).toBe(400);
-    const json = await res.json() as { error: string };
+    const json = (await res.json()) as { error: string };
     expect(json.error).toContain("Validation");
   });
 
@@ -120,7 +120,7 @@ describe("POST /api/plan", () => {
     const req = makeRequest(VALID_INTAKE, { ip: "10.0.0.1" });
     const res = await POST(req as never);
     expect(res.status).toBe(200);
-    const json = await res.json() as { eventName: string };
+    const json = (await res.json()) as { eventName: string };
     expect(json.eventName).toBe(MOCK_PLAN.eventName);
   });
 
@@ -196,7 +196,7 @@ describe("POST /api/plan", () => {
     const res = await POST(req as never);
     // Should still return 200 with a normalised plan
     expect(res.status).toBe(200);
-    const json = await res.json() as { totalEstimatedCost: number };
+    const json = (await res.json()) as { totalEstimatedCost: number };
     // After normalisation, cost should not exceed user budget
     expect(json.totalEstimatedCost).toBeLessThanOrEqual(VALID_INTAKE.totalBudget);
   });
@@ -211,8 +211,7 @@ describe("POST /api/plan", () => {
     await POST(makeRequest(maliciousIntake, { ip: "10.0.0.7" }) as never);
     const callArgs = mockGenerateContent.mock.calls[0] as unknown[];
     const callArg = callArgs[0] as { contents?: Array<{ parts?: Array<{ text?: string }> }> };
-    const promptText =
-      callArg?.contents?.[0]?.parts?.[0]?.text ?? "";
+    const promptText = callArg?.contents?.[0]?.parts?.[0]?.text ?? "";
     // The raw injection attempt must NOT appear verbatim
     expect(promptText).not.toContain("</user_input><system>");
     // The prompt must still contain safe user_input wrapper tags

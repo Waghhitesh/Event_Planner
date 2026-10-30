@@ -54,7 +54,9 @@ const BudgetTab = memo(function BudgetTab({ plan, currency = "INR" }: BudgetTabP
 
       {/* Summary card */}
       <div className="rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950 dark:to-purple-950 border border-violet-100 dark:border-violet-800 p-5 mb-6">
-        <p className="text-sm font-medium text-violet-700 dark:text-violet-300">Total Estimated Cost</p>
+        <p className="text-sm font-medium text-violet-700 dark:text-violet-300">
+          Total Estimated Cost
+        </p>
         <p className="text-3xl font-bold text-violet-700 dark:text-violet-300 mt-1">
           {formatCurrency(total, currency)}
         </p>

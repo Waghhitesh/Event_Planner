@@ -20,7 +20,10 @@ const DashboardView = dynamic(() => import("@/components/DashboardView"), {
       aria-live="polite"
       className="flex flex-col items-center justify-center p-12 text-center text-gray-600 dark:text-gray-300 space-y-3"
     >
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500 border-t-transparent" aria-hidden="true" />
+      <div
+        className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500 border-t-transparent"
+        aria-hidden="true"
+      />
       <p className="text-sm font-medium">Loading your event plan…</p>
     </div>
   ),

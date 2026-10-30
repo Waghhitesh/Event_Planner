@@ -108,10 +108,7 @@ export async function generatePlan(
   if (initialError !== null) {
     // --- ATTEMPT 2: Corrective retry for upstream or parsing error ---
     try {
-      const retryText = await callGemini(
-        buildCorrectivePrompt(intake, [initialError]),
-        signal
-      );
+      const retryText = await callGemini(buildCorrectivePrompt(intake, [initialError]), signal);
       plan = parseAndValidateResponse(retryText);
     } catch (retryErr) {
       if (signal?.aborted) {
@@ -137,10 +134,7 @@ export async function generatePlan(
       console.warn("[EventPulse] Plan invariants failed:", inv.errors);
       // --- ATTEMPT 2: Corrective retry for invariant violations ---
       try {
-        const retryText = await callGemini(
-          buildCorrectivePrompt(intake, inv.errors),
-          signal
-        );
+        const retryText = await callGemini(buildCorrectivePrompt(intake, inv.errors), signal);
         const retryPlan = parseAndValidateResponse(retryText);
         const retryInv = validatePlanInvariants(retryPlan, intake);
         plan = retryInv.valid ? retryPlan : normalisePlan(retryPlan, intake);

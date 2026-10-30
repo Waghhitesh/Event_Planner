@@ -80,6 +80,9 @@ jobs:
           key: node-modules-node22-${{ hashFiles('package-lock.json') }}
           fail-on-cache-miss: true
 
+      - name: Check code formatting
+        run: npm run format:check
+
       - name: Run ESLint
         run: npm run lint
 

@@ -30,8 +30,13 @@ const IdeasTab = memo(function IdeasTab({ plan }: IdeasTabProps) {
             className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-5"
           >
             <div className="flex items-start gap-2 mb-2">
-              <Lightbulb className="h-4 w-4 mt-0.5 text-yellow-500 flex-shrink-0" aria-hidden="true" />
-              <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">{idea.idea}</h4>
+              <Lightbulb
+                className="h-4 w-4 mt-0.5 text-yellow-500 flex-shrink-0"
+                aria-hidden="true"
+              />
+              <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                {idea.idea}
+              </h4>
             </div>
             <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
               {idea.implementationDetails}

@@ -46,10 +46,7 @@ export interface Step3Props {
   themePreferences?: string;
   specialRequirements?: string;
   error?: string;
-  onChange: <K extends "themePreferences" | "specialRequirements">(
-    field: K,
-    value: string
-  ) => void;
+  onChange: <K extends "themePreferences" | "specialRequirements">(field: K, value: string) => void;
   clearError: (field: keyof FieldErrors) => void;
   registerRef: (field: string, el: HTMLElement | null) => void;
 }

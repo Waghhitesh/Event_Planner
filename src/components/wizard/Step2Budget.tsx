@@ -51,7 +51,10 @@ export function Step2Budget({
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
               >
                 <Wallet className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
-                Total Budget ({currency}) <span aria-hidden="true" className="text-red-500">*</span>
+                Total Budget ({currency}){" "}
+                <span aria-hidden="true" className="text-red-500">
+                  *
+                </span>
               </label>
             }
           >
@@ -72,7 +75,10 @@ export function Step2Budget({
               errorId={`${formId}-budget-error`}
               hintId={`${formId}-budget-hint`}
             />
-            <p id={`${formId}-budget-hint`} className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+            <p
+              id={`${formId}-budget-hint`}
+              className="mt-1 text-xs text-gray-600 dark:text-gray-400"
+            >
               Enter your total event budget. AI will break it down across categories.
             </p>
             <FieldError id={`${formId}-budget-error`} message={errors.totalBudget} />
@@ -87,7 +93,10 @@ export function Step2Budget({
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             <Users className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
-            Guest Count <span aria-hidden="true" className="text-red-500">*</span>
+            Guest Count{" "}
+            <span aria-hidden="true" className="text-red-500">
+              *
+            </span>
           </label>
         }
       >

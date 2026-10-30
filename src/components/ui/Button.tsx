@@ -17,8 +17,7 @@ const VARIANT_STYLES: Record<ButtonVariant, string> = {
     "bg-gradient-to-r from-violet-600 to-purple-600 text-white hover:from-violet-700 hover:to-purple-700 shadow-sm",
   secondary:
     "border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 shadow-sm",
-  ghost:
-    "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
+  ghost: "bg-transparent text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800",
 };
 
 const SIZE_STYLES: Record<ButtonSize, string> = {
@@ -34,7 +33,8 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const classes = `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`.trim();
+  const classes =
+    `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`.trim();
   return (
     <button className={classes} {...props}>
       {children}

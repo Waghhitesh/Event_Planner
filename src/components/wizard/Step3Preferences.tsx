@@ -22,7 +22,10 @@ export function Step3Preferences({
             htmlFor={`${formId}-theme`}
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
-            Theme Preferences <span aria-hidden="true" className="text-red-500">*</span>
+            Theme Preferences{" "}
+            <span aria-hidden="true" className="text-red-500">
+              *
+            </span>
           </label>
         }
       >

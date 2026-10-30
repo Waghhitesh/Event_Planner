@@ -59,7 +59,7 @@ describe("buildUserPrompt", () => {
   it("does not sanitize numeric fields (they are not embedded as text)", () => {
     const prompt = buildUserPrompt(VALID_INTAKE);
     expect(prompt).toContain("500000"); // totalBudget as number
-    expect(prompt).toContain("150");    // guestCount as number
+    expect(prompt).toContain("150"); // guestCount as number
   });
 });
 

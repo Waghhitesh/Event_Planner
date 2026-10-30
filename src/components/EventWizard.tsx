@@ -145,7 +145,12 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
         if (res.status === 504) {
           throw new Error("The AI took too long, please try again");
         }
-        if (json && typeof json === "object" && "error" in json && typeof (json as { error: unknown }).error === "string") {
+        if (
+          json &&
+          typeof json === "object" &&
+          "error" in json &&
+          typeof (json as { error: unknown }).error === "string"
+        ) {
           throw new Error((json as { error: string }).error);
         }
         throw new Error("Failed to generate plan. Please try again later.");
@@ -165,7 +170,8 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
       if (err instanceof Error && err.name === "AbortError") {
         setApiError("The AI took too long, please try again");
       } else {
-        const message = err instanceof Error ? err.message : "Failed to generate plan. Please try again later.";
+        const message =
+          err instanceof Error ? err.message : "Failed to generate plan. Please try again later.";
         setApiError(message);
       }
     } finally {

@@ -35,7 +35,9 @@ describe("generate-plan module", () => {
     });
 
     it("detects quota keywords in error message", () => {
-      expect(isQuotaOrRateLimitError(new Error("Resource has been exhausted (e.g. check quota)"))).toBe(true);
+      expect(
+        isQuotaOrRateLimitError(new Error("Resource has been exhausted (e.g. check quota)"))
+      ).toBe(true);
       expect(isQuotaOrRateLimitError(new Error("Too Many Requests"))).toBe(true);
       expect(isQuotaOrRateLimitError(new Error("Generic network error"))).toBe(false);
       expect(isQuotaOrRateLimitError(null)).toBe(false);

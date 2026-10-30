@@ -12,7 +12,7 @@ describe("http module", () => {
     const res = jsonError("Something went wrong", 400, { field: "invalid" });
     expect(res.status).toBe(400);
     expect(res.headers.get("Cache-Control")).toBe("no-store");
-    const body = await res.json() as { error: string; details: { field: string } };
+    const body = (await res.json()) as { error: string; details: { field: string } };
     expect(body.error).toBe("Something went wrong");
     expect(body.details.field).toBe("invalid");
   });
@@ -22,7 +22,7 @@ describe("http module", () => {
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBe(String(LIMITS.RATE_LIMIT_RETRY_AFTER_SECONDS));
     expect(res.headers.get("Cache-Control")).toBe("no-store");
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body.error).toContain("Too many requests");
   });
 
@@ -30,7 +30,7 @@ describe("http module", () => {
     const res = rateLimitedResponse(120, "Quota exceeded.");
     expect(res.status).toBe(429);
     expect(res.headers.get("Retry-After")).toBe("120");
-    const body = await res.json() as { error: string };
+    const body = (await res.json()) as { error: string };
     expect(body.error).toBe("Quota exceeded.");
   });
 });

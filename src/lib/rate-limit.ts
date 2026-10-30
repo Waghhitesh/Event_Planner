@@ -27,9 +27,7 @@ export function isRateLimited(ip: string, now: number = Date.now()): boolean {
   }
 
   const entry = rateLimitMap.get(ip) ?? { timestamps: [] };
-  entry.timestamps = entry.timestamps.filter(
-    (t) => now - t < LIMITS.RATE_LIMIT_WINDOW_MS
-  );
+  entry.timestamps = entry.timestamps.filter((t) => now - t < LIMITS.RATE_LIMIT_WINDOW_MS);
 
   if (entry.timestamps.length >= LIMITS.RATE_LIMIT_MAX) {
     rateLimitMap.set(ip, entry);

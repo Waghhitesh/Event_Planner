@@ -9,7 +9,11 @@ export interface FieldErrorProps {
 export function FieldError({ id, message }: FieldErrorProps) {
   if (!message) return null;
   return (
-    <p id={id} role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
+    <p
+      id={id}
+      role="alert"
+      className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1"
+    >
       <AlertTriangle className="h-3 w-3" aria-hidden="true" />
       {message}
     </p>

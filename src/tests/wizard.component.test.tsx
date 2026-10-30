@@ -92,10 +92,13 @@ describe("EventWizard Component", () => {
       specialRequirements: "",
     });
 
-    expect(mockOnPlanGenerated).toHaveBeenCalledWith(MOCK_PLAN, expect.objectContaining({
-      eventType: "wedding",
-      totalBudget: 750000,
-    }));
+    expect(mockOnPlanGenerated).toHaveBeenCalledWith(
+      MOCK_PLAN,
+      expect.objectContaining({
+        eventType: "wedding",
+        totalBudget: 750000,
+      })
+    );
   });
 
   it("displays friendly rate limit message on 429 response", async () => {

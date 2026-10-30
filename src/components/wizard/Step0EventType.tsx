@@ -2,13 +2,7 @@ import { EVENT_TYPES } from "./constants";
 import { FieldError } from "./primitives";
 import type { Step0Props } from "./types";
 
-export function Step0EventType({
-  formId,
-  value,
-  onChange,
-  error,
-  registerRef,
-}: Step0Props) {
+export function Step0EventType({ formId, value, onChange, error, registerRef }: Step0Props) {
   const errorId = `${formId}-eventType-error`;
   return (
     <fieldset className="border-0 p-0 m-0" aria-describedby={error ? errorId : undefined}>

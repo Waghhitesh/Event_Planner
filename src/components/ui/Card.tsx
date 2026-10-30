@@ -12,13 +12,9 @@ const PADDING_STYLES = {
   lg: "p-6 sm:p-8",
 };
 
-export function Card({
-  padding = "md",
-  className = "",
-  children,
-  ...props
-}: CardProps) {
-  const classes = `rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm ${PADDING_STYLES[padding]} ${className}`.trim();
+export function Card({ padding = "md", className = "", children, ...props }: CardProps) {
+  const classes =
+    `rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm ${PADDING_STYLES[padding]} ${className}`.trim();
   return (
     <div className={classes} {...props}>
       {children}

@@ -24,7 +24,10 @@ export function Step1Details({
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             <CalendarDays className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
-            Event Date <span aria-hidden="true" className="text-red-500">*</span>
+            Event Date{" "}
+            <span aria-hidden="true" className="text-red-500">
+              *
+            </span>
           </label>
         }
       >
@@ -52,7 +55,10 @@ export function Step1Details({
             className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
           >
             <MapPin className="inline h-4 w-4 mr-1 text-violet-500" aria-hidden="true" />
-            Event Location <span aria-hidden="true" className="text-red-500">*</span>
+            Event Location{" "}
+            <span aria-hidden="true" className="text-red-500">
+              *
+            </span>
           </label>
         }
       >

@@ -99,8 +99,7 @@ export const responseSchema: Schema = {
           },
           daysBeforeEvent: {
             type: SchemaType.NUMBER,
-            description:
-              "Number of days before the event when this phase starts (0 = event day)",
+            description: "Number of days before the event when this phase starts (0 = event day)",
           },
           tasks: {
             type: SchemaType.ARRAY,
@@ -133,8 +132,7 @@ export const responseSchema: Schema = {
           status: {
             type: SchemaType.STRING,
             format: "enum",
-            description:
-              "Current booking status: not_started | researching | contacted | booked",
+            description: "Current booking status: not_started | researching | contacted | booked",
             enum: ["not_started", "researching", "contacted", "booked"],
           },
         },

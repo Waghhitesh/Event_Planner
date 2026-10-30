@@ -9,13 +9,7 @@ interface WizardNavProps {
   onNext: () => void;
 }
 
-export function WizardNav({
-  currentStep,
-  totalSteps,
-  isLoading,
-  onBack,
-  onNext,
-}: WizardNavProps) {
+export function WizardNav({ currentStep, totalSteps, isLoading, onBack, onNext }: WizardNavProps) {
   return (
     <div className="mt-8 flex items-center justify-between gap-3">
       {/* Back button — truly disabled (not in loading path, focus loss acceptable) */}

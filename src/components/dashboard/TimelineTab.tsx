@@ -112,7 +112,9 @@ const TimelineTab = memo(function TimelineTab({ plan }: TimelineTabProps) {
                   {phase.phase}
                 </h4>
                 <Badge variant="violet">
-                  {phase.daysBeforeEvent === 0 ? "🎉 Event Day" : `${phase.daysBeforeEvent} days before`}
+                  {phase.daysBeforeEvent === 0
+                    ? "🎉 Event Day"
+                    : `${phase.daysBeforeEvent} days before`}
                 </Badge>
               </div>
 

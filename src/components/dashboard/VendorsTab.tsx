@@ -118,7 +118,10 @@ const VendorsTab = memo(function VendorsTab({ plan, currency = "INR" }: VendorsT
                 </p>
                 <ol className="space-y-1.5 list-decimal list-inside">
                   {vendor.vettingQuestions.map((q, qi) => (
-                    <li key={qi} className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                    <li
+                      key={qi}
+                      className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed"
+                    >
                       {q}
                     </li>
                   ))}

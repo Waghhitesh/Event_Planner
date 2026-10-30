@@ -42,8 +42,8 @@ export default function HomePage() {
 
       {/* Site footer */}
       <footer className="mt-16 border-t border-gray-200 dark:border-gray-800 py-6 text-center text-xs text-gray-600 dark:text-gray-400">
-        EventPulse AI &nbsp;·&nbsp; Powered by {MODEL_DISPLAY_NAME} &nbsp;·&nbsp; Free &amp;
-        Open Source
+        EventPulse AI &nbsp;·&nbsp; Powered by {MODEL_DISPLAY_NAME} &nbsp;·&nbsp; Free &amp; Open
+        Source
       </footer>
     </div>
   );
