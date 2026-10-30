@@ -37,6 +37,19 @@ describe("DashboardView Component", () => {
     expect(document.activeElement).toBe(heading);
   });
 
+  it("renders tabs with non-empty accessible names for mobile and screen readers", () => {
+    render(<DashboardView {...defaultProps} />);
+    const budgetTab = screen.getByRole("tab", { name: /budget/i });
+    const timelineTab = screen.getByRole("tab", { name: /timeline/i });
+    const vendorsTab = screen.getByRole("tab", { name: /vendors/i });
+    const ideasTab = screen.getByRole("tab", { name: /ideas/i });
+
+    expect(budgetTab).toHaveAccessibleName(/budget/i);
+    expect(timelineTab).toHaveAccessibleName(/timeline/i);
+    expect(vendorsTab).toHaveAccessibleName(/vendors/i);
+    expect(ideasTab).toHaveAccessibleName(/ideas/i);
+  });
+
   it("supports keyboard arrow/Home/End navigation between tabs", async () => {
     const user = userEvent.setup();
     render(<DashboardView {...defaultProps} />);

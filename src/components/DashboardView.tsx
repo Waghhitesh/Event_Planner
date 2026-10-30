@@ -14,7 +14,7 @@
  *  - Print stylesheet supported via globals.css @media print rules.
  */
 
-import { useState, useRef, useEffect, type RefObject } from "react";
+import { useState, useRef, useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
 import { formatDateDisplay } from "@/lib/date";
@@ -34,7 +34,6 @@ interface DashboardViewProps {
   location: string;
   currency?: Currency;
   onReset: () => void;
-  headingRef?: RefObject<HTMLHeadingElement | null>;
 }
 
 type TabId = "budget" | "timeline" | "vendors" | "ideas";
@@ -69,17 +68,14 @@ export default function DashboardView({
   location,
   currency = "INR",
   onReset,
-  headingRef,
 }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState<TabId>("budget");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const internalHeadingRef = useRef<HTMLHeadingElement>(null);
-  const resolvedHeadingRef =
-    (headingRef as RefObject<HTMLHeadingElement | null>) ?? internalHeadingRef;
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    resolvedHeadingRef.current?.focus();
-  }, [resolvedHeadingRef]);
+    headingRef.current?.focus();
+  }, []);
 
   // ── Keyboard navigation (roving tabindex) ──────────────────────────────
 
@@ -107,11 +103,7 @@ export default function DashboardView({
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <p className="text-violet-200 text-sm font-medium mb-1">Your AI-Generated Plan</p>
-            <h1
-              ref={resolvedHeadingRef as RefObject<HTMLHeadingElement>}
-              tabIndex={-1}
-              className="text-2xl font-bold outline-none"
-            >
+            <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold outline-none">
               {plan.eventName}
             </h1>
             <p className="text-violet-100 text-sm mt-1">
@@ -168,7 +160,7 @@ export default function DashboardView({
                 }`}
               >
                 <span aria-hidden="true">{tab.emoji}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sr-only sm:not-sr-only">{tab.label}</span>
               </button>
             );
           })}
