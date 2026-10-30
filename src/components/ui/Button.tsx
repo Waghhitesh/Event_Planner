@@ -1,9 +1,15 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  children: ReactNode;
+}
+
+export interface LinkButtonProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   children: ReactNode;
@@ -26,6 +32,14 @@ const SIZE_STYLES: Record<ButtonSize, string> = {
   lg: "text-sm px-6 py-2.5 rounded-lg gap-2",
 };
 
+export function getButtonClasses(
+  variant: ButtonVariant = "primary",
+  size: ButtonSize = "md",
+  className = ""
+): string {
+  return `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`.trim();
+}
+
 export function Button({
   type = "button",
   variant = "primary",
@@ -34,11 +48,23 @@ export function Button({
   children,
   ...props
 }: ButtonProps) {
-  const classes =
-    `${BASE_STYLES} ${VARIANT_STYLES[variant]} ${SIZE_STYLES[size]} ${className}`.trim();
   return (
-    <button type={type} className={classes} {...props}>
+    <button type={type} className={getButtonClasses(variant, size, className)} {...props}>
       {children}
     </button>
+  );
+}
+
+export function LinkButton({
+  variant = "secondary",
+  size = "md",
+  className = "",
+  children,
+  ...props
+}: LinkButtonProps) {
+  return (
+    <a className={getButtonClasses(variant, size, className)} {...props}>
+      {children}
+    </a>
   );
 }

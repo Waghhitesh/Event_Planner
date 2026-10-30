@@ -137,12 +137,17 @@ describe("DashboardView Component", () => {
     global.URL.revokeObjectURL = vi.fn();
     render(<DashboardView {...defaultProps} />);
 
-    const exportBtn = screen.getByRole("button", { name: /export full event plan as csv/i });
+    const exportBtn = screen.getByRole("button", { name: /export to google sheets/i });
     await user.click(exportBtn);
 
-    const printBtn = screen.getByRole("button", { name: /print or save/i });
+    const printBtn = screen.getByRole("button", { name: /print \/ save as pdf/i });
     await user.click(printBtn);
     expect(window.print).toHaveBeenCalled();
+
+    const calLink = screen.getByRole("link", {
+      name: /sync with google calendar \(opens in new tab\)/i,
+    });
+    expect(calLink).toHaveAttribute("target", "_blank");
   });
 
   it("toggles vendor vetting questions", async () => {

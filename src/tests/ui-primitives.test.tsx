@@ -6,7 +6,7 @@
 
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { Button } from "../components/ui/Button";
+import { Button, LinkButton } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import "./setup";
@@ -35,6 +35,16 @@ describe("UI Primitives", () => {
       rerender(<Button variant="ghost">Dismiss</Button>);
       btn = screen.getByRole("button", { name: /dismiss/i });
       expect(btn.className).toContain("bg-transparent");
+    });
+  });
+
+  describe("LinkButton", () => {
+    it("renders an anchor with button styling and secondary variant by default", () => {
+      render(<LinkButton href="https://example.com">Visit site</LinkButton>);
+      const link = screen.getByRole("link", { name: /visit site/i });
+      expect(link).toBeInTheDocument();
+      expect(link).toHaveAttribute("href", "https://example.com");
+      expect(link.className).toContain("border-gray-300");
     });
   });
 

@@ -13,6 +13,7 @@ import {
   slugifyFilename,
 } from "@/lib/google-integrations";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
+import { Button, LinkButton } from "@/components/ui";
 
 interface GoogleActionsProps {
   plan: GeminiResponse;
@@ -61,39 +62,23 @@ const GoogleActions = memo(function GoogleActions({
   return (
     <div className="flex flex-wrap gap-3" role="group" aria-label="Export and integration actions">
       {/* Google Calendar */}
-      <a
-        href={calendarUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center gap-2 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950 px-4 py-2.5 text-sm font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-        aria-label="Sync this event with Google Calendar (opens in new tab)"
-      >
+      <LinkButton href={calendarUrl} target="_blank" rel="noopener noreferrer" variant="secondary">
         <Calendar className="h-4 w-4" aria-hidden="true" />
-        Sync with Google Calendar
+        Sync with Google Calendar <span className="sr-only">(opens in new tab)</span>
         <ExternalLink className="h-3 w-3 opacity-60" aria-hidden="true" />
-      </a>
+      </LinkButton>
 
       {/* Google Sheets CSV */}
-      <button
-        type="button"
-        onClick={handleExportCsv}
-        className="flex items-center gap-2 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950 px-4 py-2.5 text-sm font-medium text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
-        aria-label="Export full event plan as CSV for Google Sheets"
-      >
+      <Button variant="secondary" onClick={handleExportCsv}>
         <Download className="h-4 w-4" aria-hidden="true" />
         Export to Google Sheets (.csv)
-      </button>
+      </Button>
 
       {/* Print / Save as PDF */}
-      <button
-        type="button"
-        onClick={handlePrint}
-        className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
-        aria-label="Print or save event plan as PDF"
-      >
+      <Button variant="secondary" onClick={handlePrint}>
         <Printer className="h-4 w-4" aria-hidden="true" />
         Print / Save as PDF
-      </button>
+      </Button>
     </div>
   );
 });
