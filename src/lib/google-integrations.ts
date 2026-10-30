@@ -8,7 +8,6 @@
  */
 
 import type { GeminiResponse, Currency } from "./schemas";
-import { formatCurrency } from "./format";
 
 // ---------------------------------------------------------------------------
 // Google Calendar
@@ -73,24 +72,27 @@ export function generateGoogleCalendarUrl(
  * @param value - A string or number cell value.
  * @returns A safe string representation.
  */
-function neutraliseFormula(value: string | number): string {
-  const str = String(value);
-  if (/^[=\-+@\t\r]/.test(str)) {
-    return `'${str}`;
+function neutraliseFormula(value: string | number): string | number {
+  if (typeof value !== "string") {
+    return value;
   }
-  return str;
+  if (/^[=\-+@\t\r]/.test(value)) {
+    return `'${value}`;
+  }
+  return value;
 }
 
 /**
  * Escapes a value for RFC 4180-compliant CSV (handles commas, quotes, newlines).
- * Also neutralises spreadsheet formula injection.
+ * Also neutralises spreadsheet formula injection on strings.
  */
 function csvCell(value: string | number): string {
   const safe = neutraliseFormula(value);
-  if (/[",\r\n]/.test(safe)) {
-    return `"${safe.replace(/"/g, '""')}"`;
+  const str = String(safe);
+  if (/[",\r\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
   }
-  return safe;
+  return str;
 }
 
 /** Joins an array of values into a single CSV row string. */
@@ -104,7 +106,8 @@ function csvRow(cells: (string | number)[]): string {
  * Vendor Checklist, Personalised Ideas.
  *
  * @param planData - Validated Gemini response object.
- * @returns A string of RFC 4180 CSV content (CRLF line endings, UTF-8).
+ * @param currency - Intake currency for headers.
+ * @returns A string of RFC 4180 CSV content (CRLF line endings, UTF-8 BOM).
  */
 export function generateGoogleSheetsCsv(
   planData: GeminiResponse,
@@ -115,9 +118,7 @@ export function generateGoogleSheetsCsv(
   lines.push(csvRow(["EventPulse AI — Event Plan Export"]));
   lines.push(csvRow(["Event Name", planData.eventName]));
   lines.push(csvRow(["Theme Summary", planData.themeSummary]));
-  lines.push(
-    csvRow(["Total Estimated Cost", formatCurrency(planData.totalEstimatedCost, currency)])
-  );
+  lines.push(csvRow([`Total Estimated Cost (${currency})`, planData.totalEstimatedCost]));
   lines.push("");
 
   // ── Budget Breakdown ────────────────────────────────────────────────────
@@ -126,17 +127,10 @@ export function generateGoogleSheetsCsv(
 
   let budgetTotal = 0;
   for (const item of planData.budgetBreakdown) {
-    lines.push(
-      csvRow([
-        item.category,
-        formatCurrency(item.allocatedAmount, currency),
-        item.priority,
-        item.costSavingTip,
-      ])
-    );
+    lines.push(csvRow([item.category, item.allocatedAmount, item.priority, item.costSavingTip]));
     budgetTotal += item.allocatedAmount;
   }
-  lines.push(csvRow(["TOTAL", formatCurrency(budgetTotal, currency), "", ""]));
+  lines.push(csvRow(["TOTAL", budgetTotal, "", ""]));
   lines.push("");
 
   // ── Planning Timeline ───────────────────────────────────────────────────
@@ -158,7 +152,7 @@ export function generateGoogleSheetsCsv(
     lines.push(
       csvRow([
         vendor.service,
-        formatCurrency(vendor.estimatedCost, currency),
+        vendor.estimatedCost,
         vendor.status,
         vendor.vettingQuestions.join(" | "),
       ])
@@ -174,7 +168,7 @@ export function generateGoogleSheetsCsv(
     lines.push(csvRow([idea.idea, idea.implementationDetails]));
   }
 
-  return lines.join("\r\n"); // CRLF per RFC 4180
+  return "\uFEFF" + lines.join("\r\n"); // UTF-8 BOM + CRLF per RFC 4180
 }
 
 /**

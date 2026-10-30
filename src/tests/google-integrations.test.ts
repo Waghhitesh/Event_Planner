@@ -66,12 +66,30 @@ describe("generateGoogleCalendarUrl", () => {
 describe("generateGoogleSheetsCsv", () => {
   const csv = generateGoogleSheetsCsv(MOCK_PLAN);
 
-  it("returns a non-empty string", () => {
+  it("returns a non-empty string starting with UTF-8 BOM", () => {
     expect(csv.length).toBeGreaterThan(0);
+    expect(csv.startsWith("\uFEFF")).toBe(true);
   });
 
   it("uses CRLF line endings per RFC 4180", () => {
     expect(csv).toContain("\r\n");
+  });
+
+  it("contains currency in column headers", () => {
+    expect(csv).toContain("Total Estimated Cost (INR)");
+    expect(csv).toContain("Allocated Amount (INR)");
+    expect(csv).toContain("Estimated Cost (INR)");
+  });
+
+  it("exports raw numbers in money cells instead of formatted strings", () => {
+    // Total cost row contains raw number
+    expect(csv).toContain(`Total Estimated Cost (INR),${MOCK_PLAN.totalEstimatedCost}`);
+    // First budget breakdown line contains raw allocated amount
+    const firstBudget = MOCK_PLAN.budgetBreakdown[0]!;
+    expect(csv).toContain(`${firstBudget.category},${firstBudget.allocatedAmount},`);
+    // First vendor item contains raw estimated cost
+    const firstVendor = MOCK_PLAN.vendorChecklist[0]!;
+    expect(csv).toContain(`${firstVendor.service},${firstVendor.estimatedCost},`);
   });
 
   it("contains BUDGET BREAKDOWN section header", () => {
@@ -149,6 +167,24 @@ describe("generateGoogleSheetsCsv", () => {
     };
     const evilCsv = generateGoogleSheetsCsv(evilPlan);
     expect(evilCsv).toContain("'@SUM");
+  });
+
+  it("does not neutralise numbers when negative", () => {
+    const numericPlan = {
+      ...MOCK_PLAN,
+      budgetBreakdown: [
+        {
+          category: "Rebate",
+          allocatedAmount: -500,
+          priority: "low" as const,
+          costSavingTip: "tip",
+        },
+      ],
+    };
+    const outCsv = generateGoogleSheetsCsv(numericPlan);
+    // Negative number cell should NOT have single quote prefix
+    expect(outCsv).toContain("Rebate,-500,");
+    expect(outCsv).not.toContain("Rebate,'-500,");
   });
 });
 
