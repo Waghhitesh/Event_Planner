@@ -142,7 +142,7 @@ const TimelineTab = memo(function TimelineTab({ plan }: TimelineTabProps) {
                         <span
                           className={`text-xs leading-relaxed ${
                             checked
-                              ? "line-through text-gray-400 dark:text-gray-600"
+                              ? "line-through text-gray-600 dark:text-gray-400"
                               : "text-gray-700 dark:text-gray-300"
                           }`}
                         >

@@ -6,7 +6,7 @@
  * state transition for EventPulse AI.
  */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import EventWizard from "@/components/EventWizard";
 import type { GeminiResponse, ClientIntake } from "@/lib/schemas";
@@ -14,6 +14,16 @@ import type { GeminiResponse, ClientIntake } from "@/lib/schemas";
 // Lazy-load the dashboard — it's only shown after plan generation
 const DashboardView = dynamic(() => import("@/components/DashboardView"), {
   ssr: false,
+  loading: () => (
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex flex-col items-center justify-center p-12 text-center text-gray-600 dark:text-gray-300 space-y-3"
+    >
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-500 border-t-transparent" aria-hidden="true" />
+      <p className="text-sm font-medium">Loading your event plan…</p>
+    </div>
+  ),
 });
 
 interface PlanState {
@@ -28,15 +38,11 @@ interface PlanState {
  */
 export default function PlannerApp() {
   const [planState, setPlanState] = useState<PlanState | null>(null);
-  const dashHeadingRef = useRef<HTMLHeadingElement | null>(null);
 
-  // After plan is generated, move focus to the dashboard heading
+  // Scroll to top when plan is generated
   useEffect(() => {
     if (!planState) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // Give dynamic import a tick to mount before focusing
-    const timer = setTimeout(() => dashHeadingRef.current?.focus(), 100);
-    return () => clearTimeout(timer);
   }, [planState]);
 
   function handlePlanGenerated(plan: GeminiResponse, intake: ClientIntake) {
@@ -55,7 +61,6 @@ export default function PlannerApp() {
         location={planState.intake.location}
         currency={planState.intake.currency}
         onReset={handleReset}
-        headingRef={dashHeadingRef}
       />
     );
   }

@@ -7,16 +7,9 @@
  * All interactive state lives inside <PlannerApp> which is a Client Component.
  */
 
-import type { Metadata } from "next";
 import { Sparkles } from "lucide-react";
 import { MODEL_DISPLAY_NAME } from "@/lib/config";
 import PlannerApp from "@/components/PlannerApp";
-
-export const metadata: Metadata = {
-  title: "EventPulse AI — Smart Event Planning",
-  description:
-    "AI-powered event orchestration for weddings, birthdays, and community gatherings. Get complete budgets, timelines, vendor checklists, and personalised ideas instantly.",
-};
 
 export default function HomePage() {
   return (

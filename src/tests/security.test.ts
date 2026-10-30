@@ -39,9 +39,9 @@ describe("sanitizeInput", () => {
     expect(out).not.toContain("alert");
   });
 
-  it("strips HTML tags", () => {
-    const out = sanitizeInput("<b>bold</b> text <img src=x onerror=alert(1)>");
-    expect(out).not.toMatch(/<[^>]+>/);
+  it("preserves comparison operators like '5 < 10 and 20 > 15'", () => {
+    const out = sanitizeInput("5 < 10 and 20 > 15");
+    expect(out).toBe("5 < 10 and 20 > 15");
   });
 
   it("strips 'ignore previous instructions' phrasing", () => {

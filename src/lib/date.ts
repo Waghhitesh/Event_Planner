@@ -12,9 +12,12 @@ export const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
  * Returns today's date as a YYYY-MM-DD string evaluated in UTC.
  * Safe to call on both server and client.
  */
-export function localToday(): string {
+export function utcToday(): string {
   return formatDateOnly(new Date());
 }
+
+/** Backwards-compatible alias for utcToday. */
+export const localToday = utcToday;
 
 /**
  * Returns tomorrow's date as a YYYY-MM-DD string (UTC-safe).
@@ -35,7 +38,7 @@ export function tomorrowDateString(): string {
 export function isFutureDate(dateStr: string): boolean {
   if (!DATE_PATTERN.test(dateStr)) return false;
   // Compare as strings — YYYY-MM-DD lexicographic order == chronological order.
-  return dateStr > localToday();
+  return dateStr > utcToday();
 }
 
 /**

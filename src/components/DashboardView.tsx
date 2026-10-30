@@ -14,7 +14,7 @@
  *  - Print stylesheet supported via globals.css @media print rules.
  */
 
-import { useState, useRef, type RefObject } from "react";
+import { useState, useRef, useEffect, type RefObject } from "react";
 import { RefreshCw } from "lucide-react";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
 import { formatDateDisplay } from "@/lib/date";
@@ -73,6 +73,12 @@ export default function DashboardView({
 }: DashboardViewProps) {
   const [activeTab, setActiveTab] = useState<TabId>("budget");
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const internalHeadingRef = useRef<HTMLHeadingElement>(null);
+  const resolvedHeadingRef = (headingRef as RefObject<HTMLHeadingElement | null>) ?? internalHeadingRef;
+
+  useEffect(() => {
+    resolvedHeadingRef.current?.focus();
+  }, [resolvedHeadingRef]);
 
   // ── Keyboard navigation (roving tabindex) ──────────────────────────────
 
@@ -101,7 +107,7 @@ export default function DashboardView({
           <div>
             <p className="text-violet-200 text-sm font-medium mb-1">Your AI-Generated Plan</p>
             <h1
-              ref={headingRef as RefObject<HTMLHeadingElement>}
+              ref={resolvedHeadingRef as RefObject<HTMLHeadingElement>}
               tabIndex={-1}
               className="text-2xl font-bold outline-none"
             >

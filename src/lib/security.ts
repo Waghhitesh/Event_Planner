@@ -58,7 +58,6 @@ const INJECTION_PATTERNS: RegExp[] = [
   /<\/?system[^>]*>/gi,
   /<\/?prompt[^>]*>/gi,
   /<script\b[^>]*>[\s\S]*?<\/script>/gi,
-  /<[^>]+>/g,
 ];
 
 // Control-character regex (everything below 0x20 except tab \x09, LF \x0A, CR \x0D)

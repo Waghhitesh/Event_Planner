@@ -30,22 +30,23 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
-      {/* Reduced motion and print styles injected here to avoid Turbopack CSS loader conflicts */}
-      <style>{`
-        @media (prefers-reduced-motion: reduce) {
-          *, *::before, *::after {
-            animation-duration: 0.01ms;
-            animation-iteration-count: 1;
-            transition-duration: 0.01ms;
-            scroll-behavior: auto;
+      <head>
+        <style>{`
+          @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+              animation-duration: 0.01ms;
+              animation-iteration-count: 1;
+              transition-duration: 0.01ms;
+              scroll-behavior: auto;
+            }
           }
-        }
-        @media print {
-          header, footer, [data-print-hidden] { display: none; }
-          body { background: #ffffff; color: #000000; font-size: 12pt; }
-          a[href]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
-        }
-      `}</style>
+          @media print {
+            header, footer, [data-print-hidden] { display: none; }
+            body { background: #ffffff; color: #000000; font-size: 12pt; }
+            a[href]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
+          }
+        `}</style>
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

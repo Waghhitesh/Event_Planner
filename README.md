@@ -138,7 +138,7 @@ git clone https://github.com/Waghhitesh/Event_Planner.git
 cd Event_Planner
 
 # 2. Install
-npm install --legacy-peer-deps
+npm install
 
 # 3. Configure
 cp .env.example .env.local
