@@ -10,6 +10,7 @@ import { memo, useId, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
 import { formatCurrency } from "@/lib/format";
+import { Badge } from "@/components/ui/Badge";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -78,11 +79,9 @@ const VendorsTab = memo(function VendorsTab({ plan, currency = "INR" }: VendorsT
                     <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                       {vendor.service}
                     </span>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${STATUS_COLORS[status] ?? ""}`}
-                    >
+                    <Badge className={STATUS_COLORS[status] ?? ""}>
                       {STATUS_LABELS[status] ?? vendor.status}
-                    </span>
+                    </Badge>
                   </div>
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                     Est. {formatCurrency(vendor.estimatedCost, currency)}

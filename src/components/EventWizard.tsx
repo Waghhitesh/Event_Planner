@@ -19,6 +19,7 @@ import { AlertTriangle } from "lucide-react";
 import { STEPS, FIELD_ID_MAP, STEP_SCHEMAS } from "./wizard/constants";
 import { WizardProgress } from "./wizard/WizardProgress";
 import { WizardNav } from "./wizard/WizardNav";
+import { Card } from "@/components/ui/Card";
 import { Step0EventType } from "./wizard/Step0EventType";
 import { Step1Details } from "./wizard/Step1Details";
 import { Step2Budget } from "./wizard/Step2Budget";
@@ -177,7 +178,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
     <section aria-label="Event planning wizard" className="w-full max-w-2xl mx-auto">
       <WizardProgress steps={STEPS} currentStep={currentStep} />
 
-      <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm p-6 sm:p-8">
+      <Card padding="lg">
         <h2
           ref={stepHeadingRef}
           tabIndex={-1}
@@ -259,7 +260,7 @@ export default function EventWizard({ onPlanGenerated }: EventWizardProps) {
           onBack={handleBack}
           onNext={handleNext}
         />
-      </div>
+      </Card>
     </section>
   );
 }

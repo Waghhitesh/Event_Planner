@@ -8,6 +8,7 @@
 import { memo, useId } from "react";
 import type { GeminiResponse, Currency } from "@/lib/schemas";
 import { formatCurrency } from "@/lib/format";
+import { Badge } from "@/components/ui/Badge";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -76,11 +77,9 @@ const BudgetTab = memo(function BudgetTab({ plan, currency = "INR" }: BudgetTabP
                   <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                     {item.category}
                   </span>
-                  <span
-                    className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_BADGE[priority] ?? ""}`}
-                  >
+                  <Badge className={`ml-2 ${PRIORITY_BADGE[priority] ?? ""}`}>
                     {item.priority}
-                  </span>
+                  </Badge>
                 </div>
                 <span className="text-sm font-bold text-gray-800 dark:text-gray-200 whitespace-nowrap">
                   {formatCurrency(item.allocatedAmount, currency)}

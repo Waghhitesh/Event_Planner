@@ -9,6 +9,8 @@
 import { memo, useId, useState, useEffect, useCallback } from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import type { GeminiResponse } from "@/lib/schemas";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 
 // ---------------------------------------------------------------------------
 // localStorage persistence helpers
@@ -104,14 +106,14 @@ const TimelineTab = memo(function TimelineTab({ plan }: TimelineTabProps) {
               {phaseIdx + 1}
             </span>
 
-            <div className="rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+            <Card padding="sm" className="rounded-xl">
               <div className="flex items-center justify-between mb-2 flex-wrap gap-1">
                 <h4 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
                   {phase.phase}
                 </h4>
-                <span className="text-xs bg-violet-50 dark:bg-violet-950 text-violet-700 dark:text-violet-300 px-2 py-0.5 rounded-full border border-violet-100 dark:border-violet-800">
+                <Badge variant="violet">
                   {phase.daysBeforeEvent === 0 ? "🎉 Event Day" : `${phase.daysBeforeEvent} days before`}
-                </span>
+                </Badge>
               </div>
 
               <ul className="space-y-1.5" aria-label={`Tasks for ${phase.phase}`}>
@@ -153,7 +155,7 @@ const TimelineTab = memo(function TimelineTab({ plan }: TimelineTabProps) {
                   );
                 })}
               </ul>
-            </div>
+            </Card>
           </li>
         ))}
       </ol>
