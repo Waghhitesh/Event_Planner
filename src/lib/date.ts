@@ -17,12 +17,6 @@ export function utcToday(): string {
 }
 
 /** Backwards-compatible alias for utcToday. */
-export const localToday = utcToday;
-
-/**
- * Returns tomorrow's date as a YYYY-MM-DD string (UTC-safe).
- * Use as the `min` attribute value for date inputs.
- */
 export function tomorrowDateString(): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() + 1);

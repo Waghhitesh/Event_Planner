@@ -10,6 +10,7 @@ import type { ClientIntake, GeminiResponse } from "@/lib/schemas";
 import { buildUserPrompt, buildCorrectivePrompt } from "@/lib/prompt";
 import { validatePlanInvariants, normalisePlan } from "@/lib/plan-validation";
 import { sanitizeOutput } from "@/lib/security";
+import { logger } from "@/lib/logger";
 
 export type GeneratePlanResult =
   | { ok: true; plan: GeminiResponse }
@@ -113,7 +114,7 @@ export async function generatePlan(
       return { ok: false, kind: failureKind };
     }
     initialError = err instanceof Error ? err.message : String(err);
-    console.warn("[EventPulse] First Gemini call failed:", initialError);
+    logger.warn("First Gemini call failed:", initialError);
   }
 
   if (initialError !== null) {
@@ -127,7 +128,7 @@ export async function generatePlan(
         return { ok: false, kind: failureKind };
       }
       const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-      console.error("[EventPulse] Retry also failed:", retryMsg);
+      logger.error("Retry also failed:", retryMsg);
       return { ok: false, kind: "upstream", message: retryMsg };
     }
 
@@ -140,7 +141,7 @@ export async function generatePlan(
     // Attempt 1 succeeded — check invariants
     const inv = validatePlanInvariants(plan, intake);
     if (!inv.valid) {
-      console.warn("[EventPulse] Plan invariants failed:", inv.errors);
+      logger.warn("Plan invariants failed:", inv.errors);
       // --- ATTEMPT 2: Corrective retry for invariant violations ---
       try {
         const retryText = await callGemini(buildCorrectivePrompt(intake, inv.errors), signal);

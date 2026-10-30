@@ -5,6 +5,7 @@
 
 import { describe, it, expect } from "vitest";
 import { buildUserPrompt, buildCorrectivePrompt, SYSTEM_INSTRUCTION } from "../lib/prompt";
+import { ClientIntakeSchema } from "../lib/schemas";
 import { VALID_INTAKE } from "./fixtures";
 
 describe("SYSTEM_INSTRUCTION", () => {
@@ -34,9 +35,9 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("</user_input>");
   });
 
-  it("includes the event type inside user_input tags", () => {
+  it("includes the validated event type directly", () => {
     const prompt = buildUserPrompt(VALID_INTAKE);
-    expect(prompt).toContain("<user_input>wedding</user_input>");
+    expect(prompt).toContain("Event Type:           wedding");
   });
 
   it("includes the location inside user_input tags", () => {
@@ -67,11 +68,12 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("150"); // guestCount as number
   });
 
-  it("defaults to INR when currency is omitted", () => {
+  it("defaults to INR when currency is omitted in intake schema parsing", () => {
     const intakeNoCurrency = { ...VALID_INTAKE } as Record<string, unknown>;
     delete intakeNoCurrency.currency;
-    const prompt = buildUserPrompt(intakeNoCurrency as unknown as typeof VALID_INTAKE);
-    expect(prompt).toContain("INR");
+    const parsed = ClientIntakeSchema.parse(intakeNoCurrency);
+    const prompt = buildUserPrompt(parsed);
+    expect(prompt).toContain("Currency:             INR");
   });
 });
 
@@ -80,7 +82,7 @@ describe("buildCorrectivePrompt", () => {
     const errors = ["Budget sum mismatch", "Too few vendors"];
     const prompt = buildCorrectivePrompt(VALID_INTAKE, errors);
     // Should contain the base prompt content
-    expect(prompt).toContain("<user_input>wedding</user_input>");
+    expect(prompt).toContain("Event Type:           wedding");
   });
 
   it("lists all provided error messages", () => {
