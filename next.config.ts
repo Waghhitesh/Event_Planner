@@ -5,9 +5,11 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   experimental: {
     // Use worker threads instead of child processes for Turbopack's Node.js
-    // evaluation (webpack loaders, Babel, PostCSS). Fixes Windows crash where
-    // the child process exits with code 0 before Turbopack can connect.
-    turbopackPluginRuntimeStrategy: "forceWorkerThreads",
+    // evaluation (webpack loaders, Babel, PostCSS) on Windows only. Fixes Windows crash
+    // where child process exits with code 0 before Turbopack can connect.
+    ...(process.platform === "win32"
+      ? { turbopackPluginRuntimeStrategy: "forceWorkerThreads" as const }
+      : {}),
   },
   turbopack: {
     rules: {
