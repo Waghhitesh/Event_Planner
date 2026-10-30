@@ -64,6 +64,70 @@ describe("validatePlanInvariants — minimums", () => {
     expect(result.errors.some((e) => e.includes("Timeline"))).toBe(true);
   });
 
+  it("requires only 4 minimum timeline phases when event is within 30 days", () => {
+    // 20 days in future from today
+    const nearFuture = new Date();
+    nearFuture.setUTCDate(nearFuture.getUTCDate() + 20);
+    const shortHorizonIntake = {
+      ...VALID_INTAKE,
+      eventDate: nearFuture.toISOString().slice(0, 10),
+    };
+
+    const fourPhasePlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      timeline: [
+        { phase: "Phase 1", daysBeforeEvent: 18, tasks: ["Task 1"] },
+        { phase: "Phase 2", daysBeforeEvent: 10, tasks: ["Task 2"] },
+        { phase: "Phase 3", daysBeforeEvent: 5, tasks: ["Task 3"] },
+        { phase: "Phase 4", daysBeforeEvent: 0, tasks: ["Task 4"] },
+      ],
+    };
+
+    const result = validatePlanInvariants(fourPhasePlan, shortHorizonIntake);
+    expect(result.valid).toBe(true);
+  });
+
+  it("flags timeline phases with daysBeforeEvent exceeding available days or negative", () => {
+    const nearFuture = new Date();
+    nearFuture.setUTCDate(nearFuture.getUTCDate() + 15);
+    const shortHorizonIntake = {
+      ...VALID_INTAKE,
+      eventDate: nearFuture.toISOString().slice(0, 10),
+    };
+
+    const outOfRangePlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      timeline: [
+        { phase: "Phase 1", daysBeforeEvent: 60, tasks: ["Task 1"] }, // 60 > 15
+        { phase: "Phase 2", daysBeforeEvent: 10, tasks: ["Task 2"] },
+        { phase: "Phase 3", daysBeforeEvent: 5, tasks: ["Task 3"] },
+        { phase: "Phase 4", daysBeforeEvent: -2, tasks: ["Task 4"] }, // -2 < 0
+      ],
+    };
+
+    const result = validatePlanInvariants(outOfRangePlan, shortHorizonIntake);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("daysBeforeEvent"))).toBe(true);
+  });
+
+  it("flags timeline phases that are not sorted in descending order", () => {
+    const unsortedPlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      timeline: [
+        { phase: "Phase 1", daysBeforeEvent: 10, tasks: ["Task 1"] },
+        { phase: "Phase 2", daysBeforeEvent: 20, tasks: ["Task 2"] }, // 20 > 10
+        { phase: "Phase 3", daysBeforeEvent: 5, tasks: ["Task 3"] },
+        { phase: "Phase 4", daysBeforeEvent: 0, tasks: ["Task 4"] },
+        { phase: "Phase 5", daysBeforeEvent: 0, tasks: ["Task 5"] },
+        { phase: "Phase 6", daysBeforeEvent: 0, tasks: ["Task 6"] },
+      ],
+    };
+
+    const result = validatePlanInvariants(unsortedPlan, VALID_INTAKE);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("sorted descending"))).toBe(true);
+  });
+
   it("flags fewer than 5 vendors", () => {
     const fewVendors: GeminiResponse = {
       ...MOCK_PLAN,
@@ -148,5 +212,28 @@ describe("normalisePlan", () => {
     for (const item of normalised.budgetBreakdown) {
       expect(item.allocatedAmount).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it("normalisePlan clamps daysBeforeEvent within [0, N] and sorts descending", () => {
+    const nearFuture = new Date();
+    nearFuture.setUTCDate(nearFuture.getUTCDate() + 15);
+    const shortIntake = {
+      ...VALID_INTAKE,
+      eventDate: nearFuture.toISOString().slice(0, 10),
+    };
+
+    const messyTimelinePlan: GeminiResponse = {
+      ...MOCK_PLAN,
+      timeline: [
+        { phase: "Past event day", daysBeforeEvent: -5, tasks: ["T1"] },
+        { phase: "Way before", daysBeforeEvent: 100, tasks: ["T2"] },
+        { phase: "Midway", daysBeforeEvent: 8, tasks: ["T3"] },
+      ],
+    };
+
+    const normalised = normalisePlan(messyTimelinePlan, shortIntake);
+    expect(normalised.timeline[0]?.daysBeforeEvent).toBe(15); // clamped from 100
+    expect(normalised.timeline[1]?.daysBeforeEvent).toBe(8);
+    expect(normalised.timeline[2]?.daysBeforeEvent).toBe(0); // clamped from -5
   });
 });

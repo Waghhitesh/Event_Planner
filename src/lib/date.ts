@@ -63,6 +63,19 @@ export function isWithinMaxHorizon(str: string, maxYears = 5): boolean {
 }
 
 /**
+ * Calculates days remaining until the target event date (UTC-based).
+ * @param eventDateStr - Target date in YYYY-MM-DD
+ * @param fromDateStr - Reference date in YYYY-MM-DD (defaults to utcToday())
+ */
+export function daysUntilEvent(eventDateStr: string, fromDateStr: string = utcToday()): number {
+  const fromMs = Date.parse(fromDateStr);
+  const targetMs = Date.parse(eventDateStr);
+  if (isNaN(fromMs) || isNaN(targetMs)) return 0;
+  const diffMs = targetMs - fromMs;
+  return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+}
+
+/**
  * Formats a Date object or YYYY-MM-DD string into a human-readable date string
  * using the `en-IN` locale with `timeZone: "UTC"` to avoid off-by-one issues.
  *

@@ -44,6 +44,11 @@ describe("buildUserPrompt", () => {
     expect(prompt).toContain("Grand Ballroom");
   });
 
+  it("includes the calculated days until event in the event profile", () => {
+    const prompt = buildUserPrompt(VALID_INTAKE);
+    expect(prompt).toContain("Days until event:");
+  });
+
   it("XML-escapes or strips injected tags so they cannot break out of user_input", () => {
     const maliciousIntake = {
       ...VALID_INTAKE,

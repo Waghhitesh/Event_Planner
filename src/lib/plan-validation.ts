@@ -8,6 +8,7 @@
 import type { GeminiResponse } from "./schemas";
 import type { ClientIntake } from "./schemas";
 import { PLAN_THRESHOLDS } from "./config";
+import { daysUntilEvent } from "./date";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,10 +62,31 @@ export function validatePlanInvariants(
   }
 
   // 3. Minimum timeline phases
-  if (plan.timeline.length < PLAN_THRESHOLDS.MIN_TIMELINE_PHASES) {
-    errors.push(
-      `Timeline has ${plan.timeline.length} phases; minimum required is ${PLAN_THRESHOLDS.MIN_TIMELINE_PHASES}`
-    );
+  const N = daysUntilEvent(intake.eventDate);
+  const minPhases = N < 30 ? 4 : PLAN_THRESHOLDS.MIN_TIMELINE_PHASES;
+  if (plan.timeline.length < minPhases) {
+    errors.push(`Timeline has ${plan.timeline.length} phases; minimum required is ${minPhases}`);
+  }
+
+  // 3b. Timeline range and ordering check
+  let isSortedDescending = true;
+  for (let i = 0; i < plan.timeline.length; i++) {
+    const current = plan.timeline[i];
+    if (current && (current.daysBeforeEvent < 0 || current.daysBeforeEvent > N)) {
+      errors.push(
+        `Timeline phase '${current.phase}' daysBeforeEvent (${current.daysBeforeEvent}) must be between 0 and ${N}`
+      );
+    }
+    if (i > 0) {
+      const prev = plan.timeline[i - 1];
+      if (prev && current && current.daysBeforeEvent > prev.daysBeforeEvent) {
+        isSortedDescending = false;
+      }
+    }
+  }
+
+  if (!isSortedDescending) {
+    errors.push("Timeline phases must be sorted descending by daysBeforeEvent");
   }
 
   // 4. Minimum vendors
@@ -132,9 +154,18 @@ export function normalisePlan(plan: GeminiResponse, intake: ClientIntake): Gemin
     };
   }
 
+  const N = daysUntilEvent(intake.eventDate);
+  const normalisedTimeline = [...plan.timeline]
+    .map((phase) => ({
+      ...phase,
+      daysBeforeEvent: Math.max(0, Math.min(N, phase.daysBeforeEvent)),
+    }))
+    .sort((a, b) => b.daysBeforeEvent - a.daysBeforeEvent);
+
   return {
     ...plan,
     totalEstimatedCost: Math.round(targetTotal),
     budgetBreakdown: normalisedBreakdown,
+    timeline: normalisedTimeline,
   };
 }
